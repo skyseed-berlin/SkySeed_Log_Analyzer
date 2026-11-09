@@ -1,0 +1,4 @@
+# Echte Flug-Logs enthalten GPS-Positionen; das Repo ist öffentlich.
+*.jsonl
+test-logs/
+.claude/

@@ -7,638 +7,213 @@
     <title>Flight Log Analyzer - Skyseed</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #10b981; /* Skyseed Green */
-            --primary-hover: #059669;
-            --bg-light: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --accent-color: #3b82f6;
-            --error-color: #ef4444;
-            --border-color: rgba(0, 0, 0, 0.08);
-            --header-gradient: linear-gradient(135deg, #064e3b 0%, #10b981 100%);
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        header {
-            padding: 0.75rem 1.5rem;
-            background: var(--header-gradient);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        #map {
-            flex-grow: 1;
-            width: 100%;
-            z-index: 1;
-        }
-
-        .side-panel {
-            position: absolute;
-            top: 4.5rem;
-            right: 1.5rem;
-            z-index: 1000;
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 0;
-            border-radius: 1rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            width: 340px;
-            max-height: calc(100vh - 7rem);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .tab-nav {
-            display: flex;
-            background: #f1f5f9;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 0.75rem;
-            border: none;
-            background: transparent;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-            background: white;
-        }
-
-        .tab-content {
-            padding: 1.25rem;
-            overflow-y: auto;
-            display: none;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .tab-content.active {
-            display: flex;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.625rem 1rem;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            outline: none;
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-ghost:hover {
-            background: #f1f5f9;
-            color: var(--text-dark);
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .form-group label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .form-control {
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.4rem;
-            font-family: inherit;
-            font-size: 0.85rem;
-            outline: none;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-        }
-
-        .seed-card {
-            background: white;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .seed-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .seed-title {
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .calib-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .calib-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            padding: 4px 0;
-            border-top: 1px dashed #eee;
-        }
-
-        .result-box {
-            background: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            border-radius: 0.75rem;
-            padding: 1rem;
-            margin-top: 0.5rem;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
-        }
-
-        .result-title {
-            font-size: 0.625rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #065f46;
-            margin-bottom: 0.25rem;
-            letter-spacing: 0.05em;
-        }
-
-        .result-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #065f46;
-        }
-
-        .plan-item {
-            background: white;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .plan-title {
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .plan-meta {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-
-        .badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .badge-plan { background: #dcfce7; color: #166534; }
-        .badge-matched { background: #dbeafe; color: #1e40af; }
-
-        #file-input, #plan-input {
-            display: none;
-        }
-
-        .log-section h2 {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 0 0 0.75rem 0;
-            letter-spacing: 0.05em;
-        }
-
-        .log-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .log-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.125rem;
-            flex: 1;
-            min-width: 0;
-            width: 100%;
-            overflow: visible;
-        }
-
-        .log-item {
-            background: white;
-            padding: 0.625rem 0.5rem;
-            border-radius: 0.625rem;
-            border: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            transition: all 0.2s;
-            cursor: default;
-            user-select: none;
-        }
-
-        .log-item:active {
-            cursor: grabbing;
-        }
-
-        .log-item:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .log-item.drag-over {
-            border-color: var(--primary-color);
-            background: #eff6ff;
-            transform: scale(1.01);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.18);
-        }
-
-        .log-item.dragging {
-            opacity: 0.4;
-        }
-
-        .drag-handle {
-            color: var(--text-muted);
-            cursor: grab;
-            padding: 4px 2px;
-            margin-right: 0px;
-            font-size: 16px;
-            line-height: 1;
-            flex-shrink: 0;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-        }
-
-        .log-item:hover .drag-handle {
-            opacity: 1;
-        }
-
-        .log-name {
-            font-size: 0.8125rem;
-            font-weight: 600;
-            overflow-wrap: break-word;
-            word-break: break-all;
-            display: block;
-            width: 100%;
-            white-space: normal;
-            overflow: visible;
-            text-overflow: clip;
-        }
-
-        .log-meta {
-            font-size: 0.6875rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            display: block;
-            width: 100%;
-        }
-
-        .log-color-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-            margin-right: 0.25rem;
-            vertical-align: middle;
-        }
-
-        .delete-log {
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .delete-log:hover {
-            background-color: #fee2e2;
-            color: var(--error-color);
-        }
-
-        .toggle-log {
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .toggle-log:hover {
-            background-color: #e0f2fe;
-            color: var(--primary-color);
-        }
-
-        .star-log {
-            color: #d1d5db;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .star-log:hover {
-            color: #f59e0b;
-        }
-
-        .star-log.starred {
-            color: #f59e0b;
-        }
-
-        .recolor-log {
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .edit-log {
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .log-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .recolor-log:hover {
-            background-color: #f0fdf4;
-            color: #10b981;
-        }
-
-        .log-hidden {
-            opacity: 0.45;
-        }
-
-        .log-hidden .log-name {
-            text-decoration: line-through;
-        }
-
-        .empty-state {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 1rem;
-            border: 2px dashed var(--border-color);
-            border-radius: 0.75rem;
-        }
-
-        /* Custom Popup Style */
-        .leaflet-popup-content-wrapper {
-            border-radius: 0.75rem !important;
-            padding: 4px !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        .leaflet-popup-content {
-            margin: 0.75rem !important;
-            font-family: 'Inter', sans-serif !important;
-            font-size: 0.8125rem !important;
-        }
-
-        /* Leaflet Layer Control Customization */
-        .leaflet-control-layers {
-            border-radius: 0.75rem !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-            padding: 6px 10px !important;
-        }
-
-        .leaflet-control-layers-toggle {
-            width: 36px !important;
-            height: 36px !important;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/app.css">
 </head>
 
 <body>
     <header>
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div class="brand">
+            <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16 4L4 28L16 24L28 28L16 4Z" fill="white" />
             </svg>
             <h1>Skyseed Analyzer</h1>
         </div>
-        <div style="display:flex; align-items:center; gap:0.75rem;">
-            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">v1.1.0</span>
-            <div id="status-display" style="font-size: 0.75rem; color: rgba(255,255,255,0.8);">Bereit</div>
+        <div class="header-right">
+            <span id="app-version" class="version"></span>
+            <div id="status-display" class="status">Bereit</div>
         </div>
     </header>
 
-    <div id="map"></div>
+    <main id="main">
+        <div id="map"></div>
 
-    <div class="side-panel">
-        <div class="tab-nav">
-            <button class="tab-btn active" onclick="showTab('logs')">Logs</button>
-            <button class="tab-btn" onclick="showTab('plan')">Planung</button>
-            <button class="tab-btn" onclick="showTab('seeds')">Saatgut</button>
-        </div>
-
-        <!-- LOGS TAB -->
-        <div id="tab-logs" class="tab-content active">
-            <div class="log-section">
-                <label for="file-input" class="btn btn-primary" style="width: 100%; box-sizing: border-box;">
-                    Logs hinzufügen
-                </label>
-                <input type="file" id="file-input" multiple accept=".json,.*">
-            </div>
-
-            <div class="log-section">
-                <h2>Geladene Logs</h2>
-                <div id="log-list" class="log-list">
-                    <div class="empty-state">Keine Logs geladen</div>
-                </div>
-            </div>
-
-            <div id="stats-section" class="log-section"
-                style="display: none; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-                    <span class="label">Gesamtpunkte:</span>
-                    <span class="value" id="total-points">0</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem;">
-                    <span class="label">Gesamtdistanz:</span>
-                    <span class="value" id="total-dist">0.00 km</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem;">
-                    <span class="label">Saatdistanz:</span>
-                    <span class="value" id="total-seed-dist">0.00 km</span>
-                </div>
-                <button id="clear-all" class="btn btn-ghost" style="width: 100%; margin-top: 1rem;">Alle löschen</button>
+        <div id="drop-overlay" aria-hidden="true">
+            <div class="drop-box">
+                <div class="drop-title">Logs hier ablegen</div>
+                <div class="drop-sub">Companion-Logs (.jsonl) und alte Seed-Logs (.json), beliebig viele</div>
             </div>
         </div>
 
-        <!-- PLANNING TAB -->
-        <div id="tab-plan" class="tab-content">
-            <div class="form-group">
-                <label for="plan-input-label">Missionsplan (.plan)</label>
-                <label for="plan-input" class="btn btn-primary" style="width: 100%; box-sizing: border-box;">
-                    .plan hochladen
-                </label>
-                <input type="file" id="plan-input" accept=".plan">
+        <div class="side-panel">
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="showTab('logs')">Logs</button>
+                <button class="tab-btn" onclick="showTab('plan')">Planung</button>
+                <button class="tab-btn" onclick="showTab('seeds')">Saatgut</button>
             </div>
 
-            <div id="active-plan-info" style="display:none;">
-                <div class="plan-item">
-                    <div class="plan-title">
-                        <span id="plan-name-display">Unbenannt</span>
-                        <span class="badge badge-plan">AKTIV</span>
+            <!-- LOGS TAB -->
+            <div id="tab-logs" class="tab-content active">
+                <div class="log-section">
+                    <label for="file-input" class="btn btn-primary btn-block">Logs hinzufügen</label>
+                    <input type="file" id="file-input" multiple accept=".jsonl,.json,.txt,.log">
+                    <div class="hint">Oder Dateien direkt auf die Karte ziehen.</div>
+                </div>
+
+                <div class="log-section settings">
+                    <div class="setting-row">
+                        <label for="seed-width">Saatbreite</label>
+                        <div class="input-unit">
+                            <input type="number" id="seed-width" class="form-control" min="1" max="50" step="0.5" value="10">
+                            <span>m</span>
+                        </div>
                     </div>
-                    <div class="plan-meta" id="plan-meta-display">
-                        Distanz: 0m | Speed: 0m/s | Zeit: 0s
+                    <label class="switch-row">
+                        <input type="checkbox" id="show-swath">
+                        <span class="switch"></span>
+                        <span>Saatbreite auf der Karte zeigen</span>
+                    </label>
+                    <div class="legend">
+                        <div><span class="legend-line seed"></span>Saatlinie</div>
+                        <div><span class="legend-line empty"></span>Saat bei leerem Behälter</div>
+                        <div><span class="legend-line transfer"></span>Transferlinie</div>
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top:1rem;">
-                    <label>Saatgut & Zielmenge</label>
-                    <select id="calc-seed-select" class="form-control" onchange="calculateRequirement()"></select>
-                    <input type="number" id="calc-target-grams" class="form-control" placeholder="Gramm gesamt" oninput="calculateRequirement()">
+                <div id="kpi-section" class="log-section" style="display:none;">
+                    <h2>Gesamt <span class="h2-sub">(sichtbare Logs)</span></h2>
+                    <div id="kpi-grid" class="kpi-grid"></div>
+                    <button id="toggle-table" class="btn btn-ghost btn-block">Statistik-Tabelle zeigen</button>
                 </div>
 
-                <div id="calc-result" class="result-box" style="display:none;">
-                    <div class="result-title">Empfohlene Einstellung</div>
-                    <div class="result-value"><span id="res-rpm">--</span> RPM</div>
-                    <div style="font-size: 0.7rem; color: #065f46; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 2px;">
-                        <div>Flow: <span id="res-flow">0</span> g/min | Total: <span id="res-mass">0</span>g</div>
-                        <div id="res-warning" style="color:var(--error-color); font-weight:600; display:none;">⚠️ Wert extrapoliert!</div>
-                        <div style="font-weight: 700; margin-top: 4px; border-top: 1px dashed rgba(6, 95, 70, 0.2); padding-top: 4px;">
-                            Bedarf: <span id="res-flights">1</span> Flug/Flüge 
-                            <small id="res-load-info" style="font-weight: 400; opacity: 0.8;"></small>
+                <div class="log-section">
+                    <h2>Geladene Logs</h2>
+                    <div id="log-list" class="log-list">
+                        <div class="empty-state">Keine Logs geladen</div>
+                    </div>
+                    <button id="clear-all" class="btn btn-ghost btn-block" style="display:none; margin-top: var(--space-3);">Alle löschen</button>
+                </div>
+            </div>
+
+            <!-- PLANNING TAB -->
+            <div id="tab-plan" class="tab-content">
+                <div class="form-group">
+                    <label for="plan-input-label">Missionsplan (.plan)</label>
+                    <label for="plan-input" class="btn btn-primary btn-block">.plan hochladen</label>
+                    <input type="file" id="plan-input" accept=".plan">
+                </div>
+
+                <div id="active-plan-info" style="display:none;">
+                    <div class="plan-item">
+                        <div class="plan-title">
+                            <span id="plan-name-display">Unbenannt</span>
+                            <span class="badge badge-plan">AKTIV</span>
+                        </div>
+                        <div class="plan-meta" id="plan-meta-display">
+                            Distanz: 0m | Speed: 0m/s | Zeit: 0s
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Saatgut & Zielmenge</label>
+                        <select id="calc-seed-select" class="form-control" onchange="calculateRequirement()"></select>
+                        <input type="number" id="calc-target-grams" class="form-control" placeholder="Gramm gesamt" oninput="calculateRequirement()">
+                    </div>
+
+                    <div id="calc-result" class="result-box" style="display:none;">
+                        <div class="result-title">Empfohlene Einstellung</div>
+                        <div class="result-value"><span id="res-rpm">--</span> RPM</div>
+                        <div style="font-size: 0.7rem; color: var(--moss-800); margin-top: 0.25rem; display: flex; flex-direction: column; gap: 2px;">
+                            <div>Flow: <span id="res-flow">0</span> g/min | Total: <span id="res-mass">0</span>g</div>
+                            <div id="res-warning" style="color:var(--error-color); font-weight:600; display:none;">⚠️ Wert extrapoliert!</div>
+                            <div style="font-weight: 700; margin-top: 4px; border-top: 1px dashed var(--moss-200); padding-top: 4px;">
+                                Bedarf: <span id="res-flights">1</span> Flug/Flüge
+                                <small id="res-load-info" style="font-weight: 400; opacity: 0.8;"></small>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="log-section">
+                    <h2>Verknüpfte Logs</h2>
+                    <div id="matched-logs-list" class="log-list">
+                        <div class="empty-state">Kein Plan aktiv</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="log-section">
-                <h2>Verknüpfte Logs</h2>
-                <div id="matched-logs-list" class="log-list">
-                    <div class="empty-state">Kein Plan aktiv</div>
+            <!-- SEED DATABASE TAB -->
+            <div id="tab-seeds" class="tab-content">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin:0; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Baumsaat Posten</h2>
+                    <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;" onclick="addNewSeed()">Neu</button>
+                </div>
+                <div id="seed-list" class="log-list">
+                    <!-- Seed cards go here -->
                 </div>
             </div>
         </div>
+    </main>
 
-        <!-- SEED DATABASE TAB -->
-        <div id="tab-seeds" class="tab-content">
-            <div style="display:flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin:0; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Baumsaat Posten</h2>
-                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;" onclick="addNewSeed()">Neu</button>
-            </div>
-            <div id="seed-list" class="log-list">
-                <!-- Seed cards go here -->
-            </div>
+    <section id="stats-drawer" style="display:none;">
+        <div class="drawer-head">
+            <h2>Statistik je Log</h2>
+            <div class="drawer-note">Gesamtzeile über alle sichtbaren Logs. Saatfläche ohne Überschneidungen, auch zwischen den Logs.</div>
+            <button id="close-table" class="icon-btn" title="Tabelle schließen" aria-label="Tabelle schließen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
         </div>
-    </div>
+        <div class="table-wrap">
+            <table id="stats-table"></table>
+        </div>
+    </section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/log-parser.js"></script>
+    <script src="js/log-stats.js"></script>
     <script>
+        const APP_VERSION = "1.1.0";
+        document.getElementById('app-version').textContent = 'v' + APP_VERSION;
+
         // Map Setup
-        const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        // Kacheln von Esri: ohne API-Key und ohne Referer nutzbar (auch per file://).
+        // CARTO verlangt seit Ende August 2026 einen Key, tile.openstreetmap.org blockiert file://.
+        const streetLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri', maxZoom: 19
         });
         const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Esri'
+            attribution: 'Esri', maxZoom: 19
         });
 
-        const map = L.map('map', { zoomControl: false, layers: [streetLayer] }).setView([51.1657, 10.4515], 6);
+        const map = L.map('map', { zoomControl: false, layers: [satelliteLayer], preferCanvas: true }).setView([51.1657, 10.4515], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.control.layers({ "Straße": streetLayer, "Satelit": satelliteLayer }, null, { position: 'topleft' }).addTo(map);
+        L.control.layers({ "Satellit": satelliteLayer, "Straße": streetLayer }, null, { position: 'topleft' }).addTo(map);
+        L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+        // Saatbreiten-Streifen liegen in einer eigenen Ebene unter den Linien
+        map.createPane('swath');
+        map.getPane('swath').style.zIndex = 350;
+        const swathRenderer = L.canvas({ pane: 'swath' });
 
         // State Management
-        const activeLogs = new Map(); // filename -> {polylineGroup, markers, stats, colorSet}
+        const activeLogs = new Map(); // filename -> Log-Objekt (siehe processFile)
         let activePlan = null;
         let colorIdx = 0;
         let dragSrc = null;
-        const colors = [
-            { base: '#10b981', light: '#a7f3d0' }, // Skyseed Green
-            { base: '#3b82f6', light: '#93c5fd' }, // Blue
-            { base: '#d946ef', light: '#f5d0fe' }, // Magenta
-            { base: '#f59e0b', light: '#fde68a' }, // Amber
-            { base: '#ef4444', light: '#fecaca' }
-        ];
+        let tableOpen = false;
+        const LOG_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#a855f7', '#06b6d4',
+            '#ec4899', '#84cc16', '#f97316', '#14b8a6', '#eab308'];
+
+        function nextColor() {
+            const i = colorIdx++;
+            if (i < LOG_COLORS.length) return LOG_COLORS[i];
+            // Danach Farbtöne im Goldenen Winkel, als Hex für den Farbwähler
+            return hslToHex((i * 137.508) % 360, 75, 50);
+        }
+
+        function hslToHex(h, s, l) {
+            s /= 100; l /= 100;
+            const k = n => (n + h / 30) % 12;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
+            return '#' + [f(0), f(8), f(4)].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
 
         const AVAILABLE_RPMS = [1, 2, 3, 4, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
 
         function findClosestRPM(target) {
-            return AVAILABLE_RPMS.reduce((prev, curr) => 
+            return AVAILABLE_RPMS.reduce((prev, curr) =>
                 Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev
             );
         }
@@ -651,7 +226,7 @@
         } catch (e) {
             console.error("Error loading seeds:", e);
         }
-        
+
         if (!seedDatabase || seedDatabase.length === 0) {
             seedDatabase = [
                 { id: 1, name: "Eiche", calib: [{ rpm: 100, gpm: 80 }, { rpm: 200, gpm: 170 }] },
@@ -663,21 +238,58 @@
         const fileInput = document.getElementById('file-input');
         const planInput = document.getElementById('plan-input');
         const logListDiv = document.getElementById('log-list');
-        const statsSection = document.getElementById('stats-section');
-        const totalPointsEl = document.getElementById('total-points');
-        const totalDistEl = document.getElementById('total-dist');
         const clearAllBtn = document.getElementById('clear-all');
         const statusDisplay = document.getElementById('status-display');
+        const widthInput = document.getElementById('seed-width');
+        const swathToggle = document.getElementById('show-swath');
+        const kpiSection = document.getElementById('kpi-section');
+        const statsDrawer = document.getElementById('stats-drawer');
+        const toggleTableBtn = document.getElementById('toggle-table');
 
         // Helpers
+        let statusTimer = null;
         function showStatus(msg, timeout = 3000) {
             statusDisplay.textContent = msg;
-            if (timeout > 0) setTimeout(() => statusDisplay.textContent = 'Bereit', timeout);
+            clearTimeout(statusTimer);
+            if (timeout > 0) statusTimer = setTimeout(() => statusDisplay.textContent = 'Bereit', timeout);
         }
 
-        function formatDuration(s) {
-            const m = Math.floor(s / 60);
-            return `${m}m${Math.round(s % 60)}s`;
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        const NA = '<span class="na" title="nicht im Log">k. A.</span>';
+
+        function fmtNum(v, digits = 1) {
+            if (v === null || v === undefined || !isFinite(v)) return NA;
+            return v.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+        }
+
+        function fmtDur(s) {
+            if (s === null || s === undefined || !isFinite(s)) return NA;
+            s = Math.round(s);
+            const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+            if (h > 0) return `${h} h ${String(m).padStart(2, '0')} min`;
+            return `${m} min ${String(sec).padStart(2, '0')} s`;
+        }
+
+        function fmtDateTime(t) {
+            if (t === null || t === undefined) return NA;
+            return new Date(t).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function fmtTime(t) {
+            if (t === null || t === undefined) return NA;
+            return new Date(t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function fmtHa(m2) { return (m2 === null || m2 === undefined) ? NA : fmtNum(m2 / 10000, 2) + ' ha'; }
+        function fmtKm(m) { return fmtNum(m / 1000, 2) + ' km'; }
+        function fmtKg(g) { return (g === null || g === undefined) ? NA : fmtNum(g / 1000, 2) + ' kg'; }
+
+        function seedWidth() {
+            const w = parseFloat(widthInput.value);
+            return isFinite(w) && w > 0 ? Math.min(w, 50) : 10;
         }
 
         function showTab(tabId) {
@@ -685,14 +297,6 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             document.querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`).classList.add('active');
-        }
-
-        function getPos(p) {
-            if (!p || !p.position) return null;
-            const lat = p.position.lat !== undefined ? p.position.lat : p.position.latitude;
-            const lng = p.position.long !== undefined ? p.position.long : (p.position.longitude !== undefined ? p.position.longitude : p.position.lng);
-            if (lat === undefined || lng === undefined) return null;
-            return [lat, lng];
         }
 
         // --- SEED MANAGEMENT ---
@@ -712,7 +316,7 @@
                 card.className = 'seed-card';
                 card.innerHTML = `
                     <div class="seed-header">
-                        <span class="seed-title">${seed.name}</span>
+                        <span class="seed-title">${esc(seed.name)}</span>
                         <div class="delete-log" onclick="deleteSeed('${seed.id}')" title="Löschen">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
                         </div>
@@ -769,12 +373,12 @@
             const gInput = document.getElementById(`new-gpm-${id}`);
             const r = parseInt(rInput.value);
             const g = parseInt(gInput.value);
-            
+
             if (isNaN(r) || isNaN(g)) {
                 alert("Bitte gültige Zahlen für RPM und g/min eingeben.");
                 return;
             }
-            
+
             const s = seedDatabase.find(x => x.id == id);
             if (s) {
                 s.calib.push({ rpm: r, gpm: g });
@@ -835,10 +439,10 @@
                 resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--text-muted);">Bitte zuerst einen gültigen Missionsplan (.plan) laden.</div>';
                 return;
             }
-            
+
             const seedId = document.getElementById('calc-seed-select').value;
             const grams = parseFloat(document.getElementById('calc-target-grams').value);
-            
+
             if (!seedId) {
                 resBox.style.display = 'block';
                 resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--text-muted);">Bitte Baumart auswählen.</div>';
@@ -854,7 +458,7 @@
             const seed = seedDatabase.find(s => s.id == seedId);
             if (!seed || !seed.calib || seed.calib.length === 0) {
                 resBox.style.display = 'block';
-                resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:#991b1b;">Keine Kalibrierungswerte für dieses Saatgut vorhanden. Bitte im Tab "Saatgut" hinzufügen.</div>';
+                resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--rust-700);">Keine Kalibrierungswerte für dieses Saatgut vorhanden. Bitte im Tab "Saatgut" hinzufügen.</div>';
                 return;
             }
 
@@ -862,12 +466,12 @@
             resBox.innerHTML = `
                 <div class="result-title">Empfohlene Einstellung</div>
                 <div class="result-value"><span id="res-rpm">--</span> RPM</div>
-                <div style="font-size: 0.7rem; color: #065f46; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-size: 0.7rem; color: var(--moss-800); margin-top: 0.25rem; display: flex; flex-direction: column; gap: 2px;">
                     <div id="res-ideal-info" style="opacity: 0.8; font-style: italic; margin-bottom: 4px;">Idealwert: <span id="res-rpm-ideal">--</span> RPM</div>
                     <div>Flow: <span id="res-flow">0</span> g/min | Total: <span id="res-mass">0</span>g</div>
                     <div id="res-warning" style="color:var(--error-color); font-weight:600; display:none;">⚠️ Wert extrapoliert!</div>
-                    <div style="font-weight: 700; margin-top: 4px; border-top: 1px dashed rgba(6, 95, 70, 0.2); padding-top: 4px;">
-                        Bedarf: <span id="res-flights">1</span> Flug/Flüge 
+                    <div style="font-weight: 700; margin-top: 4px; border-top: 1px dashed var(--moss-200); padding-top: 4px;">
+                        Bedarf: <span id="res-flights">1</span> Flug/Flüge
                         <small id="res-load-info" style="font-weight: 400; opacity: 0.8;"></small>
                     </div>
                 </div>
@@ -907,12 +511,12 @@
             document.getElementById('res-mass').textContent = grams;
             document.getElementById('res-flights').textContent = flights;
             document.getElementById('res-warning').style.display = extrapolated ? 'block' : 'none';
-            
-            const loadInfo = flights > 1 
-                ? `(ca. ${(gramsPerFlight/1000).toFixed(1)}kg pro Start)` 
+
+            const loadInfo = flights > 1
+                ? `(ca. ${(gramsPerFlight/1000).toFixed(1)}kg pro Start)`
                 : `(${(grams/1000).toFixed(1)}kg Ladung)`;
             document.getElementById('res-load-info').textContent = loadInfo;
-            
+
             resBox.style.display = 'block';
         }
 
@@ -921,245 +525,458 @@
             if (!activePlan) { list.innerHTML = '<div class="empty-state">Kein Plan</div>'; return; }
             const matches = [];
             activeLogs.forEach((log, name) => {
-                if (activePlan.bounds.intersects(log.group.getBounds().pad(0.1))) matches.push({ name, log });
+                if (activePlan.bounds.intersects(log.bounds.pad(0.1))) matches.push({ name, log });
             });
             list.innerHTML = matches.length ? '' : '<div class="empty-state">Keine Matches</div>';
             matches.forEach(m => {
                 const el = document.createElement('div');
                 el.className = 'plan-item';
                 el.style.cursor = 'pointer';
-                el.innerHTML = `<div class="plan-title">${m.name} <span class="badge badge-matched">MATCH</span></div>`;
-                el.onclick = () => { showTab('logs'); map.fitBounds(m.log.group.getBounds()); };
+                el.innerHTML = `<div class="plan-title">${esc(m.name)} <span class="badge badge-matched">MATCH</span></div>`;
+                el.onclick = () => { showTab('logs'); map.fitBounds(m.log.bounds); };
                 list.appendChild(el);
             });
         }
 
-        // --- LOG PROCESSING ---
+        // --- LOG LADEN ---
         fileInput.addEventListener('change', async (e) => {
-            for (const file of e.target.files) {
-                if (!activeLogs.has(file.name)) await processFile(file);
-            }
+            await loadFiles([...e.target.files]);
             fileInput.value = '';
         });
 
-        async function processFile(file) {
-            try {
-                const text = await file.text();
-                const raw = JSON.parse(text);
-                const entries = raw.map(p => typeof p === 'string' ? JSON.parse(p) : p)
-                    .filter(e => e.position && e.timestamp)
-                    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-                if (!entries.length) return;
-                const stats = calculateStats(entries);
-                const colorSet = colors[colorIdx++ % colors.length];
-                addLogToMap(file.name, entries, stats, colorSet);
-            } catch (err) { console.error(err); }
-        }
-
-        function calculateStats(entries) {
-            let dist = 0, seedDist = 0, seedTime = 0, totalRpm = 0, seedCount = 0;
-            let armedTime = 0, missionTime = 0;
-            for (let i = 0; i < entries.length - 1; i++) {
-                const c = entries[i], n = entries[i + 1];
-                const p1 = getPos(c), p2 = getPos(n);
-                if (!p1 || !p2) continue;
-                const d = map.distance(p1, p2);
-                dist += d;
-                const dt = (new Date(n.timestamp) - new Date(c.timestamp)) / 1000;
-                const mode = (c.drone?.mode || c.mode || "").toUpperCase();
-                const seeding = c.seeder?.status === "on";
-                // Format-Kompatibilität: neues Format drone.armed, altes Format drone.armedState
-                const armedRaw = c.drone?.armed ?? c.drone?.armedState ?? c.armedState;
-                if (armedRaw === true || armedRaw === "true") armedTime += dt;
-                if (mode === "AUTO") missionTime += dt;
-                if (seeding && mode === "AUTO") {
-                    seedDist += d;
-                    seedTime += dt;
-                    const rpm = c.seeder?.rpm || c.seeder?.speedSetting;
-                    if (rpm) { totalRpm += Number(rpm); seedCount++; }
+        async function loadFiles(files) {
+            if (!files.length) return;
+            const added = [];
+            const failed = [];
+            let skipped = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (activeLogs.has(file.name)) { skipped++; continue; }
+                showStatus(`Lade ${i + 1}/${files.length}: ${file.name}`, 0);
+                // Dem Browser Zeit zum Zeichnen der Statuszeile geben
+                await new Promise(r => setTimeout(r, 0));
+                try {
+                    const log = await processFile(file);
+                    added.push(log);
+                } catch (err) {
+                    console.error(file.name, err);
+                    failed.push(`${file.name} (${err.message})`);
                 }
             }
-            return {
-                dist: dist / 1000,
-                seedDist: seedDist / 1000,
-                seedTime,
-                seedTimeFormatted: formatDuration(seedTime),
-                armedTime,
-                missionTime,
-                prozentSaat: missionTime > 0 ? (seedTime / missionTime * 100).toFixed(1) : '0.0',
-                flugId: entries[0]?.id ?? '—',
-                rpm: seedCount ? totalRpm / seedCount : 0,
-                points: entries.length
-            };
-        }
-
-        function addLogToMap(name, entries, stats, colorSet) {
-            const group = L.featureGroup().addTo(map);
-            let seg = [entries[0]], status = entries[0].seeder?.status === "on" ? "on" : "off";
-
-            for (let i = 1; i < entries.length; i++) {
-                const s = entries[i].seeder?.status === "on" ? "on" : "off";
-                if (s === status) seg.push(entries[i]);
-                else {
-                    drawSegment(seg, status, colorSet, group);
-                    seg = [entries[i - 1], entries[i]];
-                    status = s;
-                }
-            }
-            drawSegment(seg, status, colorSet, group);
-
-            // Popup-Inhalt für Klick auf Route
-            const popupHtml = `<div style="font-size:12px; min-width:220px;">
-                <div style="font-weight:700; color:${colorSet.base}; margin-bottom:8px;">${name}</div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 16px;">
-                    <span>Flight-ID:</span><span>${stats.flugId}</span>
-                    <span>Missionszeit:</span><span>${formatDuration(stats.missionTime)}</span>
-                    <span>Saatzeit:</span><span>${stats.seedTimeFormatted}</span>
-                    <span>% Saat:</span><span>${stats.prozentSaat}%</span>
-                    <span>RPM:</span><span>${stats.rpm.toFixed(0)}</span>
-                    <span>Gesamtdist.:</span><span>${stats.dist.toFixed(2)} km</span>
-                    <span>Saatdist.:</span><span>${stats.seedDist.toFixed(2)} km</span>
-                </div>
-            </div>`;
-            group.eachLayer(layer => layer.bindPopup(popupHtml));
-
-            const p1 = getPos(entries[0]), p2 = getPos(entries[entries.length - 1]);
-            const m1 = p1 ? L.circleMarker(p1, { radius: 4, color: '#10b981', fillOpacity: 1 }).addTo(map) : null;
-            const m2 = p2 ? L.circleMarker(p2, { radius: 4, color: '#ef4444', fillOpacity: 1 }).addTo(map) : null;
-
-            activeLogs.set(name, { group, markers: [m1, m2].filter(m => m), stats, colorSet, entries, visible: true, starred: false });
             updateUI();
             matchLogsToPlan();
-            map.fitBounds(group.getBounds());
+            if (added.length) {
+                let b = L.latLngBounds(added[0].bounds.getSouthWest(), added[0].bounds.getNorthEast());
+                added.forEach(l => b.extend(l.bounds));
+                map.fitBounds(b, { padding: [40, 40] });
+            }
+            let msg = `${added.length} Log(s) geladen`;
+            if (skipped) msg += `, ${skipped} bereits vorhanden`;
+            if (failed.length) msg += `, ${failed.length} nicht lesbar`;
+            showStatus(msg, failed.length ? 8000 : 3000);
+            if (failed.length) alert('Nicht lesbar:\n' + failed.join('\n'));
         }
 
-        function drawSegment(pts, status, colors, group) {
-            if (pts.length < 2) return;
-            const latlngs = pts.map(p => getPos(p)).filter(p => p);
-            const baseWeight = status === "on" ? 5 : 3;
-            const pl = L.polyline(latlngs, {
-                color: status === "on" ? colors.base : colors.light,
-                weight: baseWeight,
-                opacity: status === "on" ? 1 : 0.6
-            }).addTo(group);
-            pl._baseWeight = baseWeight;
+        async function processFile(file) {
+            const text = await file.text();
+            const parsed = LogParser.parse(text);
+            if (parsed.samples.length < 2) throw new Error('keine Positionsdaten');
+            const res = LogStats.compute(parsed);
+            const log = {
+                name: file.name,
+                meta: parsed.meta,
+                stats: res.stats,
+                segments: res.segments,
+                coverage: LogStats.coverage(res.segments, seedWidth()),
+                color: nextColor(),
+                visible: true,
+                starred: false,
+                bounds: L.latLngBounds(parsed.samples.map(s => [s.lat, s.lon]))
+            };
+            drawLog(log);
+            activeLogs.set(file.name, log);
+            return log;
+        }
+
+        // --- KARTE ---
+        // Linienstil je Kategorie; die Farbe kommt vom Log
+        const LINE_STYLE = {
+            seed: { weight: 4, opacity: 1, dashArray: null },
+            empty: { weight: 4, opacity: 0.9, dashArray: '1 7', lineCap: 'round' },
+            transfer: { weight: 2, opacity: 0.6, dashArray: '6 6' }
+        };
+
+        function drawLog(log) {
+            if (log.group) map.removeLayer(log.group);
+            if (log.swathGroup) map.removeLayer(log.swathGroup);
+            log.group = L.featureGroup();
+            log.swathGroup = L.featureGroup();
+            // Transfer zuerst, damit Saatlinien obenauf liegen
+            const order = { transfer: 0, empty: 1, seed: 2 };
+            [...log.segments].sort((a, b) => order[a.cat] - order[b.cat]).forEach(seg => {
+                const st = LINE_STYLE[seg.cat];
+                const pl = L.polyline(seg.pts, Object.assign({ color: log.color }, st));
+                pl._baseWeight = st.weight;
+                pl.addTo(log.group);
+                if (seg.cat === 'seed') {
+                    L.polyline(seg.pts, {
+                        renderer: swathRenderer, pane: 'swath', color: log.color, opacity: 0.45,
+                        weight: 1, lineCap: 'round', lineJoin: 'round', interactive: false
+                    }).addTo(log.swathGroup);
+                }
+            });
+            const first = log.segments[0].pts[0];
+            const lastSeg = log.segments[log.segments.length - 1];
+            const last = lastSeg.pts[lastSeg.pts.length - 1];
+            L.circleMarker(first, { radius: 4, color: '#ffffff', weight: 1.5, fillColor: log.color, fillOpacity: 1 })
+                .bindTooltip('Start').addTo(log.group);
+            L.circleMarker(last, { radius: 4, color: log.color, weight: 2, fillColor: '#ffffff', fillOpacity: 1 })
+                .bindTooltip('Ende').addTo(log.group);
+            log.group.bindPopup(() => popupHtml(log));
+            if (log.visible) {
+                log.group.addTo(map);
+                if (swathToggle.checked) log.swathGroup.addTo(map);
+            }
+            updateSwathWidths();
+        }
+
+        function popupHtml(log) {
+            const s = log.stats;
+            return `<div class="popup">
+                <div class="popup-title" style="color:${log.color}">${esc(log.name)}</div>
+                <div class="popup-grid">
+                    <span>Start</span><span>${fmtDateTime(s.start)}</span>
+                    <span>Drohne</span><span>${log.meta.droneId ? esc(log.meta.droneId) : NA}</span>
+                    <span>Flugzeit</span><span>${fmtDur(s.flightTime)}</span>
+                    <span>Saatzeit</span><span>${fmtDur(s.seedTime)}</span>
+                    <span>Saatstrecke</span><span>${fmtKm(s.seedDist)}</span>
+                    <span>Transfer</span><span>${fmtKm(s.transferDist)}</span>
+                    <span>Saatfläche</span><span>${fmtHa(log.coverage.areaM2)}</span>
+                    <span>Abgeworfen</span><span>${fmtKg(s.weightDropped)}</span>
+                    <span>Seeder RPM</span><span>${fmtNum(s.measRpm, 2)} (Soll ${fmtNum(s.targetRpm, 1)})</span>
+                </div>
+            </div>`;
+        }
+
+        // Streifenbreite in Pixeln = Saatbreite in Metern / Meter pro Pixel
+        function updateSwathWidths() {
+            if (!swathToggle.checked) return;
+            const w = seedWidth();
+            const zoom = map.getZoom();
+            activeLogs.forEach(log => {
+                if (!log.swathGroup) return;
+                log.swathGroup.eachLayer(pl => {
+                    const lat = pl.getBounds().getCenter().lat;
+                    const mpp = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
+                    pl.setStyle({ weight: Math.max(1, w / mpp) });
+                });
+            });
+        }
+        map.on('zoomend', updateSwathWidths);
+
+        swathToggle.addEventListener('change', () => {
+            activeLogs.forEach(log => {
+                if (!log.visible) return;
+                if (swathToggle.checked) log.swathGroup.addTo(map);
+                else map.removeLayer(log.swathGroup);
+            });
+            updateSwathWidths();
+        });
+
+        let widthTimer = null;
+        widthInput.addEventListener('input', () => {
+            clearTimeout(widthTimer);
+            widthTimer = setTimeout(() => {
+                const w = seedWidth();
+                activeLogs.forEach(log => { log.coverage = LogStats.coverage(log.segments, w); });
+                updateSwathWidths();
+                updateUI();
+            }, 300);
+        });
+
+        function focusPoint(p, label) {
+            if (!p) return;
+            map.setView([p.lat, p.lon], Math.max(map.getZoom(), 17));
+            L.popup().setLatLng([p.lat, p.lon]).setContent(`<div class="popup">${label}<br>${fmtTime(p.t)}</div>`).openOn(map);
+        }
+
+        // --- DRAG & DROP AUF DIE KARTE ---
+        const dropOverlay = document.getElementById('drop-overlay');
+        let dragDepth = 0;
+        const isFileDrag = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+
+        document.addEventListener('dragenter', e => {
+            if (!isFileDrag(e)) return;
+            e.preventDefault();
+            dragDepth++;
+            dropOverlay.classList.add('active');
+        });
+        document.addEventListener('dragover', e => {
+            if (!isFileDrag(e)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+        document.addEventListener('dragleave', e => {
+            if (!isFileDrag(e)) return;
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (dragDepth === 0) dropOverlay.classList.remove('active');
+        });
+        document.addEventListener('drop', e => {
+            if (!isFileDrag(e)) return;
+            e.preventDefault();
+            dragDepth = 0;
+            dropOverlay.classList.remove('active');
+            loadFiles([...e.dataTransfer.files]);
+        });
+
+        // --- LOG-LISTE, KPI, TABELLE ---
+        function visibleLogs() {
+            return [...activeLogs.values()].filter(l => l.visible);
         }
 
         function updateUI() {
-            logListDiv.innerHTML = activeLogs.size ? '' : '<div class="empty-state">Keine Logs</div>';
-            let tD = 0, tSD = 0, tP = 0;
+            renderLogList();
+            const vis = visibleLogs();
+            const agg = LogStats.aggregate(vis, seedWidth());
+            renderKpis(agg, vis.length);
+            renderTable(agg);
+            kpiSection.style.display = activeLogs.size ? 'flex' : 'none';
+            clearAllBtn.style.display = activeLogs.size ? 'flex' : 'none';
+            if (!activeLogs.size && tableOpen) setTableOpen(false);
+        }
+
+        function renderKpis(a, n) {
+            const tiles = [
+                ['Flüge', n ? String(n) : '0'],
+                ['Flugzeit', fmtDur(a.flightTime)],
+                ['Saatzeit', fmtDur(a.seedTime)],
+                ['Saatfläche', fmtHa(a.areaM2)],
+                ['Abgeworfen', fmtKg(a.weightDropped)],
+                ['Saatstrecke', fmtKm(a.seedDist)],
+                ['Transfer', fmtKm(a.transferDist)],
+                ['Ausbringung', a.weightDropped !== null && a.weightLogs === a.flights && a.areaM2 > 0
+                    ? fmtNum(a.weightDropped / 1000 / (a.areaM2 / 10000), 1) + ' kg/ha' : NA]
+            ];
+            document.getElementById('kpi-grid').innerHTML = tiles.map(([l, v]) =>
+                `<div class="kpi"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div></div>`).join('');
+        }
+
+        function renderLogList() {
+            logListDiv.innerHTML = activeLogs.size ? '' : '<div class="empty-state">Keine Logs geladen</div>';
             activeLogs.forEach((log, name) => {
-                tD += log.stats.dist; tSD += log.stats.seedDist; tP += (log.stats.points || 0);
-                const safeName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const s = log.stats;
                 const item = document.createElement('div');
-                item.className = 'log-item' + (log.visible === false ? ' log-hidden' : '');
+                item.className = 'log-item' + (log.visible ? '' : ' log-hidden');
                 item.setAttribute('draggable', 'true');
                 item.dataset.name = name;
+                const metaParts = [fmtDateTime(s.start)];
+                if (log.meta.droneId) metaParts.push('Drohne ' + esc(log.meta.droneId));
+                if (log.meta.format === 'legacy') metaParts.push('altes Format');
                 item.innerHTML = `
-                    <span class="drag-handle" style="cursor:grab; color:var(--text-muted); padding:4px; flex-shrink:0;">⠿</span>
+                    <span class="drag-handle" title="Reihenfolge ändern">⠿</span>
+                    <label class="color-swatch" title="Farbe ändern" style="background:${log.color}">
+                        <input type="color" value="${log.color}">
+                    </label>
                     <div class="log-info">
-                        <div class="log-name"><span class="log-color-indicator" style="background-color:${log.colorSet.base}"></span>${name}</div>
-                        <div class="log-meta">${log.stats.seedTimeFormatted} Saat | ${log.stats.seedDist.toFixed(2)} km</div>
+                        <div class="log-name">${esc(name)}</div>
+                        <div class="log-meta">${metaParts.join(' · ')}</div>
+                        <div class="log-meta">${fmtDur(s.seedTime)} Saat · ${fmtHa(log.coverage.areaM2)} · ${fmtKg(s.weightDropped)}</div>
                     </div>
-                    <div style="display:flex; gap:2px; align-items:center; flex-shrink:0;">
-                        <span class="recolor-log" title="Farbe ändern" onclick="recolorLog('${safeName}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/><circle cx="6.5" cy="11.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="12" cy="5.5" r="1" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1" fill="currentColor"/></svg>
-                        </span>
-                        <span class="star-log${log.starred ? ' starred' : ''}" title="${log.starred ? 'Stern entfernen' : 'Favorit'}" onclick="toggleStar('${safeName}')">
+                    <div class="log-actions">
+                        <button class="icon-btn star-log${log.starred ? ' starred' : ''}" data-act="star" title="${log.starred ? 'Stern entfernen' : 'Favorit'}">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="${log.starred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        </span>
-                        <span class="toggle-log" title="${log.visible !== false ? 'Ausblenden' : 'Einblenden'}" onclick="toggleLog('${safeName}')">
-                            ${log.visible !== false
+                        </button>
+                        <button class="icon-btn" data-act="toggle" title="${log.visible ? 'Ausblenden' : 'Einblenden'}">
+                            ${log.visible
                                 ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
                                 : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`}
-                        </span>
-                        <span class="delete-log" title="Löschen" onclick="removeLog('${safeName}')">
+                        </button>
+                        <button class="icon-btn delete-log" data-act="delete" title="Log entfernen">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                        </span>
+                        </button>
                     </div>`;
 
-                // Hover-Highlighting — nutzt _baseWeight damit kein Drift durch updateUI-Aufrufe
+                const colorInput = item.querySelector('input[type=color]');
+                colorInput.addEventListener('input', e => setLogColor(name, e.target.value, false));
+                colorInput.addEventListener('change', e => setLogColor(name, e.target.value, true));
+
+                item.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const act = btn.dataset.act;
+                    if (act === 'star') toggleStar(name);
+                    else if (act === 'toggle') toggleLog(name);
+                    else if (act === 'delete') removeLog(name);
+                }));
+
+                // Hover-Highlighting über _baseWeight, damit kein Drift durch updateUI-Aufrufe entsteht
                 item.addEventListener('mouseenter', () => {
-                    if (log.visible !== false) log.group.eachLayer(l => l.setStyle({ weight: (l._baseWeight || 3) + 3 }));
+                    if (log.visible) log.group.eachLayer(l => { if (l._baseWeight) l.setStyle({ weight: l._baseWeight + 3 }); });
                 });
                 item.addEventListener('mouseleave', () => {
-                    if (log.visible !== false) log.group.eachLayer(l => l.setStyle({ weight: l._baseWeight || 3 }));
+                    if (log.visible) log.group.eachLayer(l => { if (l._baseWeight) l.setStyle({ weight: l._baseWeight }); });
                 });
 
-                // Drag & Drop
+                // Reihenfolge per Drag & Drop in der Liste
                 item.addEventListener('dragstart', (e) => {
                     dragSrc = name;
                     item.style.opacity = '0.5';
                     e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', name);
                 });
                 item.addEventListener('dragend', () => {
                     item.style.opacity = '';
-                    logListDiv.querySelectorAll('.log-item').forEach(el => el.style.outline = '');
+                    dragSrc = null;
+                    logListDiv.querySelectorAll('.log-item').forEach(el => el.classList.remove('drag-over'));
                 });
                 item.addEventListener('dragover', (e) => {
+                    if (!dragSrc) return;
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
-                    logListDiv.querySelectorAll('.log-item').forEach(el => el.style.outline = '');
-                    item.style.outline = '2px solid var(--primary-color)';
+                    logListDiv.querySelectorAll('.log-item').forEach(el => el.classList.remove('drag-over'));
+                    item.classList.add('drag-over');
                 });
                 item.addEventListener('drop', (e) => {
+                    if (!dragSrc) return;
                     e.preventDefault();
-                    if (dragSrc && dragSrc !== name) reorderLogs(dragSrc, name);
+                    if (dragSrc !== name) reorderLogs(dragSrc, name);
                 });
 
-                // Klick → auf Karte zoomen
+                // Klick: auf das Log zoomen
                 item.addEventListener('click', (e) => {
-                    if (!e.target.closest('.delete-log') && !e.target.closest('.recolor-log') &&
-                        !e.target.closest('.star-log') && !e.target.closest('.toggle-log') &&
-                        !e.target.closest('.drag-handle') && log.visible !== false) {
-                        map.fitBounds(log.group.getBounds());
-                    }
+                    if (e.target.closest('.color-swatch') || e.target.closest('.drag-handle')) return;
+                    if (log.visible) map.fitBounds(log.bounds, { padding: [40, 40] });
                 });
 
                 logListDiv.appendChild(item);
             });
-            totalPointsEl.textContent = tP;
-            totalDistEl.textContent = tD.toFixed(2) + " km";
-            document.getElementById('total-seed-dist').textContent = tSD.toFixed(2) + " km";
-            statsSection.style.display = activeLogs.size ? 'block' : 'none';
         }
 
+        // Spalten der Statistik-Tabelle. log = Einzellog-Zeile, agg = Gesamtzeile.
+        const TABLE_COLUMNS = [
+            { label: 'Start', log: l => fmtDateTime(l.stats.start),
+              agg: a => a.start === null ? NA : `${fmtDateTime(a.start)}<br><span class="sub">bis ${fmtDateTime(a.end)}</span>` },
+            { label: 'Drohne', log: l => l.meta.droneId ? esc(l.meta.droneId) : NA, agg: a => a.drones.length ? esc(a.drones.join(', ')) : NA },
+            { label: 'Flugzeit', log: l => fmtDur(l.stats.flightTime), agg: a => fmtDur(a.flightTime) },
+            { label: 'Saatzeit', log: l => fmtDur(l.stats.seedTime), agg: a => fmtDur(a.seedTime) },
+            { label: 'Saatanteil', title: 'Saatzeit / Flugzeit',
+              log: l => l.stats.flightTime ? fmtNum(l.stats.seedTime / l.stats.flightTime * 100, 0) + ' %' : NA,
+              agg: a => a.flightTime ? fmtNum(a.seedTime / a.flightTime * 100, 0) + ' %' : NA },
+            { label: 'Strecke', log: l => fmtKm(l.stats.dist), agg: a => fmtKm(a.dist) },
+            { label: 'Saatstrecke', log: l => fmtKm(l.stats.seedDist), agg: a => fmtKm(a.seedDist) },
+            { label: 'Transfer', log: l => fmtKm(l.stats.transferDist), agg: a => fmtKm(a.transferDist) },
+            { label: 'Saat bei leerem Behälter', title: 'Seeder lief, Leersensor meldete "empty"',
+              log: l => l.stats.emptyTime ? `${fmtDur(l.stats.emptyTime)}<br><span class="sub">${fmtKm(l.stats.emptyDist)}</span>` : '0',
+              agg: a => a.emptyTime ? `${fmtDur(a.emptyTime)}<br><span class="sub">${fmtKm(a.emptyDist)}</span>` : '0' },
+            { label: 'Saatbahnen', title: 'Zusammenhängende Saatabschnitte ab 5 m', log: l => String(l.stats.lanes), agg: a => String(a.lanes) },
+            { label: 'Saatfläche netto', title: 'Saatlinien x Saatbreite, Überschneidungen herausgerechnet',
+              log: l => fmtHa(l.coverage.areaM2), agg: a => fmtHa(a.areaM2) },
+            { label: 'Überlappung', title: '1 - Nettofläche / (Saatstrecke x Saatbreite)',
+              log: l => overlapPct(l.coverage.areaM2, l.stats.seedDist * seedWidth()),
+              agg: a => overlapPct(a.areaM2, a.grossM2) },
+            { label: 'Abgeworfen', title: 'Gewicht vor der ersten minus nach der letzten Saatphase (Median über ~10 s)',
+              log: l => fmtKg(l.stats.weightDropped), agg: a => fmtKg(a.weightDropped) },
+            { label: 'Ausbringung', title: 'Abgeworfenes Gewicht / Nettofläche',
+              log: l => rate(l.stats.weightDropped, l.coverage.areaM2),
+              agg: a => a.weightLogs === a.flights ? rate(a.weightDropped, a.areaM2) : NA },
+            { label: 'Seeder RPM Soll', title: 'Ø während der Saat', log: l => fmtNum(l.stats.targetRpm, 1), agg: a => fmtNum(a.targetRpm, 1) },
+            { label: 'Seeder RPM Ist', title: 'Ø gemessene Drehzahl während der Saat', log: l => fmtNum(l.stats.measRpm, 2), agg: a => fmtNum(a.measRpm, 2) },
+            { label: 'Spreader RPM', title: 'Ø Soll-Drehzahl, solange der Spreader läuft (Ist-Wert nicht im Log)',
+              log: l => fmtNum(l.stats.spreaderRpm, 0), agg: a => fmtNum(a.spreaderRpm, 0) },
+            { label: 'Ø Saat-Geschw.', log: l => fmtSpeed(l.stats.seedSpeed), agg: a => fmtSpeed(a.seedSpeed) },
+            { label: 'max. Geschw.', log: l => fmtSpeed(l.stats.maxSpeed), agg: a => fmtSpeed(a.maxSpeed) },
+            { label: 'Höhenradar min.', title: 'Geringster Höhenradar-Wert während der Saat, Klick zeigt die Stelle',
+              log: l => radarCell(l.stats.minHeight, 'Höhenradar min.'), agg: a => radarCell(a.minHeight, 'Höhenradar min.') },
+            { label: 'Höhenradar Median', title: 'Median des Höhenradars während der Saat',
+              log: l => l.stats.medianHeight === null ? NA : fmtNum(l.stats.medianHeight / 100, 2) + ' m', agg: () => '' },
+            { label: 'Frontradar min.', title: 'Geringster Frontradar-Wert im Flug (ab 3 m über Start), Klick zeigt die Stelle',
+              log: l => radarCell(l.stats.minFront, 'Frontradar min.'), agg: a => radarCell(a.minFront, 'Frontradar min.') },
+            { label: 'GPS-Genauigkeit', title: 'Ø HDOP bzw. horizontale Genauigkeit im Flug',
+              log: l => gpsCell(l.stats), agg: a => gpsCell(a) },
+            { label: 'Mission', title: 'Höchster erreichter Wegpunkt / Wegpunkte gesamt (letzte geladene Mission)',
+              log: l => l.stats.missionCount ? `${l.stats.missionMax} / ${l.stats.missionCount}` +
+                  (l.stats.missions > 1 ? `<br><span class="sub">${l.stats.missions} Missionen im Flug</span>` : '') : NA,
+              agg: () => '' },
+            { label: 'Behälter leer ab', log: l => l.stats.emptyAt === null ? 'nein' : fmtTime(l.stats.emptyAt), agg: () => '' },
+            { label: 'Seeder nicht erreichbar', title: 'Zeit mit seeder.status "unreachable"',
+              log: l => fmtDur(l.stats.unreachableTime), agg: () => '' }
+        ];
+
+        function overlapPct(net, gross) {
+            if (!gross) return NA;
+            return fmtNum(Math.max(0, 1 - net / gross) * 100, 0) + ' %';
+        }
+        function rate(g, m2) {
+            if (g === null || !m2) return NA;
+            return fmtNum(g / 1000 / (m2 / 10000), 1) + ' kg/ha';
+        }
+        function fmtSpeed(v) { return v === null ? NA : fmtNum(v, 1) + ' m/s'; }
+        function gpsCell(s) {
+            if (!s.hasGps) return '<span class="na" title="Das Log enthält keine GPS-Genauigkeit">nicht im Log</span>';
+            const parts = [];
+            if (s.gpsAccM !== null) parts.push(fmtNum(s.gpsAccM, 2) + ' m');
+            if (s.gpsHdop !== null) parts.push('HDOP ' + fmtNum(s.gpsHdop, 2));
+            return parts.join('<br>');
+        }
+        const radarPoints = [];
+        function radarCell(p, label) {
+            if (!p) return NA;
+            const idx = radarPoints.push({ p, label }) - 1;
+            return `<a href="#" class="jump" data-radar="${idx}">${fmtNum(p.v / 100, 2)} m</a>`;
+        }
+
+        function renderTable(agg) {
+            const table = document.getElementById('stats-table');
+            radarPoints.length = 0;
+            const vis = visibleLogs();
+            const head = '<thead><tr><th class="sticky">Log</th>' +
+                TABLE_COLUMNS.map(c => `<th${c.title ? ` title="${esc(c.title)}"` : ''}>${c.label}</th>`).join('') + '</tr></thead>';
+            const rows = vis.map(l => '<tr><td class="sticky"><span class="dot" style="background:' + l.color + '"></span>' +
+                `<span class="row-name" title="${esc(l.name)}">${esc(l.name)}</span></td>` +
+                TABLE_COLUMNS.map(c => `<td>${c.log(l)}</td>`).join('') + '</tr>').join('');
+            const total = vis.length ? `<tfoot><tr><td class="sticky">Gesamt (${vis.length} ${vis.length === 1 ? 'Flug' : 'Flüge'})</td>` +
+                TABLE_COLUMNS.map(c => `<td>${c.agg(agg)}</td>`).join('') + '</tr></tfoot>' : '';
+            table.innerHTML = head + '<tbody>' + rows + '</tbody>' + total;
+            table.querySelectorAll('a.jump').forEach(a => a.addEventListener('click', e => {
+                e.preventDefault();
+                const r = radarPoints[+a.dataset.radar];
+                focusPoint(r.p, `${r.label}: ${fmtNum(r.p.v / 100, 2)} m`);
+            }));
+        }
+
+        function setTableOpen(open) {
+            tableOpen = open;
+            statsDrawer.style.display = open ? 'flex' : 'none';
+            toggleTableBtn.textContent = open ? 'Statistik-Tabelle ausblenden' : 'Statistik-Tabelle zeigen';
+            map.invalidateSize();
+        }
+        toggleTableBtn.onclick = () => setTableOpen(!tableOpen);
+        document.getElementById('close-table').onclick = () => setTableOpen(false);
+
+        // --- LOG-AKTIONEN ---
         function removeLog(name) {
             const log = activeLogs.get(name);
+            if (!log) return;
             map.removeLayer(log.group);
-            log.markers.forEach(m => map.removeLayer(m));
+            map.removeLayer(log.swathGroup);
             activeLogs.delete(name);
             updateUI();
             matchLogsToPlan();
         }
 
-        function recolorLog(name) {
+        // live = true während des Ziehens im Farbwähler: nur Karte und Farbfeld aktualisieren
+        function setLogColor(name, color, final) {
             const log = activeLogs.get(name);
             if (!log) return;
-            const h = Math.floor(Math.random() * 360);
-            const base = `hsl(${h}, 70%, 42%)`;
-            const light = `hsl(${h}, 70%, 72%)`;
-            log.colorSet = { base, light };
-            log.group.eachLayer(layer => {
-                const isSeeding = (layer._baseWeight || 3) >= 5;
-                layer.setStyle({ color: isSeeding ? base : light, weight: layer._baseWeight || 3 });
+            log.color = color;
+            log.group.eachLayer(l => {
+                if (l._baseWeight) l.setStyle({ color });
+                else if (l.setStyle && l.options.fillColor !== '#ffffff') l.setStyle({ fillColor: color });
+                else if (l.setStyle) l.setStyle({ color });
             });
-            // Popup-Farbe aktualisieren
-            const popupHtml = `<div style="font-size:12px; min-width:220px;">
-                <div style="font-weight:700; color:${base}; margin-bottom:8px;">${name}</div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 16px;">
-                    <span>Flight-ID:</span><span>${log.stats.flugId}</span>
-                    <span>Missionszeit:</span><span>${formatDuration(log.stats.missionTime)}</span>
-                    <span>Saatzeit:</span><span>${log.stats.seedTimeFormatted}</span>
-                    <span>% Saat:</span><span>${log.stats.prozentSaat}%</span>
-                    <span>RPM:</span><span>${log.stats.rpm.toFixed(0)}</span>
-                    <span>Gesamtdist.:</span><span>${log.stats.dist.toFixed(2)} km</span>
-                    <span>Saatdist.:</span><span>${log.stats.seedDist.toFixed(2)} km</span>
-                </div>
-            </div>`;
-            log.group.eachLayer(layer => layer.bindPopup(popupHtml));
-            updateUI();
+            log.swathGroup.eachLayer(l => l.setStyle({ color }));
+            const sw = logListDiv.querySelector(`.log-item[data-name="${CSS.escape(name)}"] .color-swatch`);
+            if (sw) sw.style.background = color;
+            if (final) updateUI();
         }
 
         function toggleStar(name) {
@@ -1175,11 +992,12 @@
             log.visible = !log.visible;
             if (log.visible) {
                 log.group.addTo(map);
-                log.markers.forEach(m => m.addTo(map));
+                if (swathToggle.checked) log.swathGroup.addTo(map);
             } else {
                 map.removeLayer(log.group);
-                log.markers.forEach(m => map.removeLayer(m));
+                map.removeLayer(log.swathGroup);
             }
+            updateSwathWidths();
             updateUI();
         }
 
@@ -1195,7 +1013,10 @@
             updateUI();
         }
 
-        clearAllBtn.onclick = () => { activeLogs.forEach((_, n) => removeLog(n)); };
+        clearAllBtn.onclick = () => {
+            if (!confirm(`Alle ${activeLogs.size} Logs entfernen?`)) return;
+            [...activeLogs.keys()].forEach(n => removeLog(n));
+        };
 
         // Start
         updateSeedUI();
