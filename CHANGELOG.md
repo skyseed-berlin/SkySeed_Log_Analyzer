@@ -1,11 +1,6 @@
 # Changelog
 
-## Unreleased
-
-### 💥 Breaking Changes
-- Tabs „Planung" (.plan laden, RPM-Empfehlung) und „Saatgut" (Kalibrierwerte) entfernt. Der
-  Analyzer wertet nur noch Logs aus; im Browser gespeicherte Saatgut-Kalibrierungen werden nicht
-  mehr angezeigt
+## Version 1.2.0 (2026-11-10)
 
 ### 🚀 Added
 - Companion-Logs (`flight_*.jsonl`, copter-companion 4.x) lesbar; Formaterkennung am Inhalt,
@@ -22,6 +17,8 @@
 - Farbe je Log über einen Farbwähler frei wählbar
 
 ### 🔄 Changed
+- Tabs „Planung" (.plan laden, RPM-Empfehlung) und „Saatgut" (Kalibrierwerte) entfernt. Der
+  Analyzer wertet nur noch Logs aus, die Seitenleiste hat keine Tabs mehr
 - Oberfläche auf die Skyseed-Design-Tokens umgestellt (`styles/`)
 - Satellit ist die Standard-Karte
 
