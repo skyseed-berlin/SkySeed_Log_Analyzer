@@ -2,16 +2,6 @@
    Skyseed-Design-Tokens (styles/tokens, eingebunden über styles/base.css). */
 
 :root {
-    /* Alte Variablennamen bleiben als Alias, damit Planung/Saatgut unverändert funktionieren */
-    --primary-color: var(--color-primary);
-    --primary-hover: var(--color-primary-hover);
-    --bg-light: var(--color-bg-app);
-    --card-bg: var(--color-surface);
-    --text-dark: var(--color-text);
-    --text-muted: var(--color-text-muted);
-    --accent-color: var(--color-accent);
-    --error-color: var(--color-danger);
-    --border-color: var(--color-border);
     --panel-width: 360px;
 }
 
@@ -104,40 +94,13 @@ main {
     overflow: hidden;
 }
 
-.tab-nav {
-    display: flex;
-    background: var(--color-bg-sunken);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.tab-btn {
-    flex: 1;
-    padding: var(--space-3);
-    border: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: var(--text-label);
-    font-weight: 600;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
-    border-bottom: 2px solid transparent;
-}
-.tab-btn:hover { background: var(--color-surface-hover); }
-.tab-btn.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-    background: var(--color-surface);
-}
-
-.tab-content {
+.panel-content {
     padding: var(--space-4);
     overflow-y: auto;
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: var(--space-5);
 }
-.tab-content.active { display: flex; }
 
 /* ---- Buttons und Formulare ---- */
 .btn {
@@ -179,8 +142,7 @@ main {
 .icon-btn.delete-log:hover { background: var(--color-danger-bg); color: var(--color-danger); }
 .icon-btn.star-log.starred, .icon-btn.star-log:hover { color: var(--color-warning); }
 
-.form-group { display: flex; flex-direction: column; gap: var(--space-2); }
-.form-group label, .setting-row label {
+.setting-row label {
     font-size: var(--text-caption);
     font-weight: 600;
     letter-spacing: var(--text-caption-ls);
@@ -200,7 +162,7 @@ main {
 }
 .form-control:focus { border-color: var(--color-focus-ring); box-shadow: var(--focus-ring); }
 
-#file-input, #plan-input { display: none; }
+#file-input { display: none; }
 
 .hint { margin-top: var(--space-2); font-size: var(--text-caption); color: var(--color-text-faint); text-align: center; }
 
@@ -413,69 +375,6 @@ main {
 #stats-table .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: var(--space-2); vertical-align: middle; }
 #stats-table .row-name { display: inline-block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 #stats-table a.jump { color: var(--color-primary); font-weight: 600; text-decoration: underline dotted; }
-
-/* ---- Saatgut / Planung ---- */
-.seed-card {
-    background: var(--color-surface);
-    padding: var(--space-3);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-.seed-header { display: flex; justify-content: space-between; align-items: center; }
-.seed-title { font-weight: 700; font-size: var(--text-body); }
-.calib-list { display: flex; flex-direction: column; gap: 4px; }
-.calib-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--text-caption);
-    color: var(--color-text-muted);
-    padding: 4px 0;
-    border-top: 1px dashed var(--color-border);
-}
-.delete-log { color: var(--color-text-muted); cursor: pointer; padding: 4px; border-radius: var(--radius-sm); }
-.delete-log:hover { background: var(--color-danger-bg); color: var(--color-danger); }
-
-.result-box {
-    background: var(--color-success-bg);
-    border: 1px solid var(--moss-200);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    margin-top: var(--space-2);
-}
-.result-title {
-    font-size: 10px;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--moss-800);
-    margin-bottom: var(--space-1);
-    letter-spacing: 0.05em;
-}
-.result-value { font-size: 24px; font-weight: 700; color: var(--moss-800); }
-
-.plan-item {
-    background: var(--color-surface);
-    padding: var(--space-3);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.plan-title { font-weight: 600; font-size: var(--text-body-sm); display: flex; justify-content: space-between; gap: var(--space-2); }
-.plan-meta { font-size: var(--text-caption); color: var(--color-text-muted); }
-
-.badge {
-    padding: 2px 8px;
-    border-radius: var(--radius-pill);
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-.badge-plan { background: var(--moss-100); color: var(--moss-800); }
-.badge-matched { background: var(--teal-100); color: var(--teal-900); }
 
 /* ---- Leaflet ---- */
 .leaflet-popup-content-wrapper { border-radius: var(--radius-lg) !important; box-shadow: var(--shadow-md) !important; }

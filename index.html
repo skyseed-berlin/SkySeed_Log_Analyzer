@@ -36,14 +36,7 @@
         </div>
 
         <div class="side-panel">
-            <div class="tab-nav">
-                <button class="tab-btn active" onclick="showTab('logs')">Logs</button>
-                <button class="tab-btn" onclick="showTab('plan')">Planung</button>
-                <button class="tab-btn" onclick="showTab('seeds')">Saatgut</button>
-            </div>
-
-            <!-- LOGS TAB -->
-            <div id="tab-logs" class="tab-content active">
+            <div class="panel-content">
                 <div class="log-section">
                     <label for="file-input" class="btn btn-primary btn-block">Logs hinzufügen</label>
                     <input type="file" id="file-input" multiple accept=".jsonl,.json,.txt,.log">
@@ -82,64 +75,6 @@
                         <div class="empty-state">Keine Logs geladen</div>
                     </div>
                     <button id="clear-all" class="btn btn-ghost btn-block" style="display:none; margin-top: var(--space-3);">Alle löschen</button>
-                </div>
-            </div>
-
-            <!-- PLANNING TAB -->
-            <div id="tab-plan" class="tab-content">
-                <div class="form-group">
-                    <label for="plan-input-label">Missionsplan (.plan)</label>
-                    <label for="plan-input" class="btn btn-primary btn-block">.plan hochladen</label>
-                    <input type="file" id="plan-input" accept=".plan">
-                </div>
-
-                <div id="active-plan-info" style="display:none;">
-                    <div class="plan-item">
-                        <div class="plan-title">
-                            <span id="plan-name-display">Unbenannt</span>
-                            <span class="badge badge-plan">AKTIV</span>
-                        </div>
-                        <div class="plan-meta" id="plan-meta-display">
-                            Distanz: 0m | Speed: 0m/s | Zeit: 0s
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top:1rem;">
-                        <label>Saatgut & Zielmenge</label>
-                        <select id="calc-seed-select" class="form-control" onchange="calculateRequirement()"></select>
-                        <input type="number" id="calc-target-grams" class="form-control" placeholder="Gramm gesamt" oninput="calculateRequirement()">
-                    </div>
-
-                    <div id="calc-result" class="result-box" style="display:none;">
-                        <div class="result-title">Empfohlene Einstellung</div>
-                        <div class="result-value"><span id="res-rpm">--</span> RPM</div>
-                        <div style="font-size: 0.7rem; color: var(--moss-800); margin-top: 0.25rem; display: flex; flex-direction: column; gap: 2px;">
-                            <div>Flow: <span id="res-flow">0</span> g/min | Total: <span id="res-mass">0</span>g</div>
-                            <div id="res-warning" style="color:var(--error-color); font-weight:600; display:none;">⚠️ Wert extrapoliert!</div>
-                            <div style="font-weight: 700; margin-top: 4px; border-top: 1px dashed var(--moss-200); padding-top: 4px;">
-                                Bedarf: <span id="res-flights">1</span> Flug/Flüge
-                                <small id="res-load-info" style="font-weight: 400; opacity: 0.8;"></small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="log-section">
-                    <h2>Verknüpfte Logs</h2>
-                    <div id="matched-logs-list" class="log-list">
-                        <div class="empty-state">Kein Plan aktiv</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SEED DATABASE TAB -->
-            <div id="tab-seeds" class="tab-content">
-                <div style="display:flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin:0; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Baumsaat Posten</h2>
-                    <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;" onclick="addNewSeed()">Neu</button>
-                </div>
-                <div id="seed-list" class="log-list">
-                    <!-- Seed cards go here -->
                 </div>
             </div>
         </div>
@@ -188,7 +123,6 @@
 
         // State Management
         const activeLogs = new Map(); // filename -> Log-Objekt (siehe processFile)
-        let activePlan = null;
         let colorIdx = 0;
         let dragSrc = null;
         let tableOpen = false;
@@ -210,33 +144,8 @@
             return '#' + [f(0), f(8), f(4)].map(x => x.toString(16).padStart(2, '0')).join('');
         }
 
-        const AVAILABLE_RPMS = [1, 2, 3, 4, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
-
-        function findClosestRPM(target) {
-            return AVAILABLE_RPMS.reduce((prev, curr) =>
-                Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev
-            );
-        }
-
-        // Seed database (Persist in localStorage)
-        let seedDatabase = [];
-        try {
-            const stored = localStorage.getItem('skyseed_seeds');
-            if (stored) seedDatabase = JSON.parse(stored);
-        } catch (e) {
-            console.error("Error loading seeds:", e);
-        }
-
-        if (!seedDatabase || seedDatabase.length === 0) {
-            seedDatabase = [
-                { id: 1, name: "Eiche", calib: [{ rpm: 100, gpm: 80 }, { rpm: 200, gpm: 170 }] },
-                { id: 2, name: "Buche", calib: [{ rpm: 100, gpm: 120 }, { rpm: 200, gpm: 250 }] }
-            ];
-        }
-
         // UI Elements
         const fileInput = document.getElementById('file-input');
-        const planInput = document.getElementById('plan-input');
         const logListDiv = document.getElementById('log-list');
         const clearAllBtn = document.getElementById('clear-all');
         const statusDisplay = document.getElementById('status-display');
@@ -292,252 +201,6 @@
             return isFinite(w) && w > 0 ? Math.min(w, 50) : 10;
         }
 
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            document.querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`).classList.add('active');
-        }
-
-        // --- SEED MANAGEMENT ---
-        function saveSeeds() {
-            localStorage.setItem('skyseed_seeds', JSON.stringify(seedDatabase));
-            updateSeedUI();
-            updateSeedSelects();
-            calculateRequirement(); // Update planning results if data changed
-        }
-
-        function updateSeedUI() {
-            const list = document.getElementById('seed-list');
-            if (!list) return;
-            list.innerHTML = '';
-            seedDatabase.forEach(seed => {
-                const card = document.createElement('div');
-                card.className = 'seed-card';
-                card.innerHTML = `
-                    <div class="seed-header">
-                        <span class="seed-title">${esc(seed.name)}</span>
-                        <div class="delete-log" onclick="deleteSeed('${seed.id}')" title="Löschen">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
-                        </div>
-                    </div>
-                    <div class="calib-list">
-                        ${seed.calib.map((c, idx) => `
-                            <div class="calib-row">
-                                <span>${c.rpm} RPM ➔ ${c.gpm} g/min</span>
-                                <span style="cursor:pointer; color:var(--error-color); font-weight:bold; padding: 0 4px;" onclick="removeCalib('${seed.id}', ${idx})">×</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="display:flex; gap:4px; margin-top:8px;">
-                        <input type="number" id="new-rpm-${seed.id}" class="form-control" placeholder="RPM" style="flex:1; padding:4px; font-size:11px;" onkeydown="if(event.key==='Enter') addCalib('${seed.id}')">
-                        <input type="number" id="new-gpm-${seed.id}" class="form-control" placeholder="g/min" style="flex:1; padding:4px; font-size:11px;" onkeydown="if(event.key==='Enter') addCalib('${seed.id}')">
-                        <button class="btn btn-primary" style="padding:4px 8px; font-size:10px;" onclick="addCalib('${seed.id}')">Add</button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
-
-        function updateSeedSelects() {
-            const s = document.getElementById('calc-seed-select');
-            if (!s) return;
-            const current = s.value;
-            s.innerHTML = '<option value="">-- Saatgut wählen --</option>';
-            seedDatabase.forEach(seed => {
-                const opt = document.createElement('option');
-                opt.value = seed.id;
-                opt.textContent = seed.name;
-                if (seed.id == current) opt.selected = true;
-                s.appendChild(opt);
-            });
-        }
-
-        function addNewSeed() {
-            const name = prompt("Name des Saatguts:");
-            if (!name) return;
-            const id = "seed_" + Date.now();
-            seedDatabase.push({ id, name, calib: [] });
-            saveSeeds();
-        }
-
-        function deleteSeed(id) {
-            if (confirm("Dieses Saatgut wirklich löschen?")) {
-                seedDatabase = seedDatabase.filter(s => s.id != id);
-                saveSeeds();
-            }
-        }
-
-        function addCalib(id) {
-            const rInput = document.getElementById(`new-rpm-${id}`);
-            const gInput = document.getElementById(`new-gpm-${id}`);
-            const r = parseInt(rInput.value);
-            const g = parseInt(gInput.value);
-
-            if (isNaN(r) || isNaN(g)) {
-                alert("Bitte gültige Zahlen für RPM und g/min eingeben.");
-                return;
-            }
-
-            const s = seedDatabase.find(x => x.id == id);
-            if (s) {
-                s.calib.push({ rpm: r, gpm: g });
-                s.calib.sort((a, b) => a.rpm - b.rpm);
-                rInput.value = '';
-                gInput.value = '';
-                saveSeeds();
-            }
-        }
-
-        function removeCalib(seedId, index) {
-            const s = seedDatabase.find(x => x.id == seedId);
-            if (s) {
-                s.calib.splice(index, 1);
-                saveSeeds();
-            }
-        }
-
-        // --- PLAN PROCESSING ---
-        planInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const text = await file.text();
-            const data = JSON.parse(text);
-            if (!data.mission) return;
-
-            let dist = 0, latlngs = [];
-            data.mission.items.forEach((item, i) => {
-                if (item.params[4] && item.params[5]) {
-                    const pos = [item.params[4], item.params[5]];
-                    if (latlngs.length > 0) dist += map.distance(latlngs[latlngs.length - 1], pos);
-                    latlngs.push(pos);
-                }
-            });
-
-            const speed = data.mission.hoverSpeed || 5;
-            activePlan = { name: file.name, dist, speed, time: dist / speed, bounds: L.latLngBounds(latlngs), latlngs };
-
-            document.getElementById('plan-name-display').textContent = file.name;
-            document.getElementById('plan-meta-display').textContent = `Distanz: ${Math.round(dist)}m | Speed: ${speed}m/s | Zeit: ${Math.round(dist / speed)}s`;
-            document.getElementById('active-plan-info').style.display = 'block';
-
-            if (window.planLayer) map.removeLayer(window.planLayer);
-            window.planLayer = L.polyline(latlngs, { color: '#64748b', dashArray: '5, 10', weight: 2 }).addTo(map);
-            map.fitBounds(activePlan.bounds, { padding: [50, 50] });
-
-            calculateRequirement();
-            matchLogsToPlan();
-            showStatus("Plan geladen");
-        });
-
-        function calculateRequirement() {
-            const resBox = document.getElementById('calc-result');
-            if (!resBox) return;
-
-            if (!activePlan || !activePlan.time || activePlan.time <= 0) {
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--text-muted);">Bitte zuerst einen gültigen Missionsplan (.plan) laden.</div>';
-                return;
-            }
-
-            const seedId = document.getElementById('calc-seed-select').value;
-            const grams = parseFloat(document.getElementById('calc-target-grams').value);
-
-            if (!seedId) {
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--text-muted);">Bitte Baumart auswählen.</div>';
-                return;
-            }
-
-            if (isNaN(grams) || grams <= 0) {
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--text-muted);">Bitte Zielgewicht in Gramm eingeben.</div>';
-                return;
-            }
-
-            const seed = seedDatabase.find(s => s.id == seedId);
-            if (!seed || !seed.calib || seed.calib.length === 0) {
-                resBox.style.display = 'block';
-                resBox.innerHTML = '<div class="result-title">Hinweis</div><div style="font-size:0.8rem; color:var(--rust-700);">Keine Kalibrierungswerte für dieses Saatgut vorhanden. Bitte im Tab "Saatgut" hinzufügen.</div>';
-                return;
-            }
-
-            // Restore original result box structure if it was overwritten by the hint
-            resBox.innerHTML = `
-                <div class="result-title">Empfohlene Einstellung</div>
-                <div class="result-value"><span id="res-rpm">--</span> RPM</div>
-                <div style="font-size: 0.7rem; color: var(--moss-800); margin-top: 0.25rem; display: flex; flex-direction: column; gap: 2px;">
-                    <div id="res-ideal-info" style="opacity: 0.8; font-style: italic; margin-bottom: 4px;">Idealwert: <span id="res-rpm-ideal">--</span> RPM</div>
-                    <div>Flow: <span id="res-flow">0</span> g/min | Total: <span id="res-mass">0</span>g</div>
-                    <div id="res-warning" style="color:var(--error-color); font-weight:600; display:none;">⚠️ Wert extrapoliert!</div>
-                    <div style="font-weight: 700; margin-top: 4px; border-top: 1px dashed var(--moss-200); padding-top: 4px;">
-                        Bedarf: <span id="res-flights">1</span> Flug/Flüge
-                        <small id="res-load-info" style="font-weight: 400; opacity: 0.8;"></small>
-                    </div>
-                </div>
-            `;
-
-            const MAX_LOAD = 15000; // 15kg
-            const flights = Math.ceil(grams / MAX_LOAD);
-            const gramsPerFlight = grams / flights;
-
-            const gpmReq = grams / (activePlan.time / 60);
-            const cal = [...seed.calib].sort((a, b) => a.gpm - b.gpm);
-            let idealRPM = 0;
-            let extrapolated = false;
-
-            if (gpmReq <= cal[0].gpm) {
-                idealRPM = (gpmReq / cal[0].gpm) * cal[0].rpm;
-                extrapolated = true;
-            } else if (gpmReq >= cal[cal.length - 1].gpm) {
-                const last = cal[cal.length - 1];
-                idealRPM = (gpmReq / last.gpm) * last.rpm;
-                extrapolated = true;
-            } else {
-                for (let i = 0; i < cal.length - 1; i++) {
-                    if (gpmReq >= cal[i].gpm && gpmReq <= cal[i + 1].gpm) {
-                        const r = (gpmReq - cal[i].gpm) / (cal[i + 1].gpm - cal[i].gpm);
-                        idealRPM = cal[i].rpm + r * (cal[i + 1].rpm - cal[i].rpm);
-                        break;
-                    }
-                }
-            }
-
-            const recommendedRPM = findClosestRPM(idealRPM);
-
-            document.getElementById('res-rpm').textContent = recommendedRPM;
-            document.getElementById('res-rpm-ideal').textContent = idealRPM.toFixed(1);
-            document.getElementById('res-flow').textContent = gpmReq.toFixed(1);
-            document.getElementById('res-mass').textContent = grams;
-            document.getElementById('res-flights').textContent = flights;
-            document.getElementById('res-warning').style.display = extrapolated ? 'block' : 'none';
-
-            const loadInfo = flights > 1
-                ? `(ca. ${(gramsPerFlight/1000).toFixed(1)}kg pro Start)`
-                : `(${(grams/1000).toFixed(1)}kg Ladung)`;
-            document.getElementById('res-load-info').textContent = loadInfo;
-
-            resBox.style.display = 'block';
-        }
-
-        function matchLogsToPlan() {
-            const list = document.getElementById('matched-logs-list');
-            if (!activePlan) { list.innerHTML = '<div class="empty-state">Kein Plan</div>'; return; }
-            const matches = [];
-            activeLogs.forEach((log, name) => {
-                if (activePlan.bounds.intersects(log.bounds.pad(0.1))) matches.push({ name, log });
-            });
-            list.innerHTML = matches.length ? '' : '<div class="empty-state">Keine Matches</div>';
-            matches.forEach(m => {
-                const el = document.createElement('div');
-                el.className = 'plan-item';
-                el.style.cursor = 'pointer';
-                el.innerHTML = `<div class="plan-title">${esc(m.name)} <span class="badge badge-matched">MATCH</span></div>`;
-                el.onclick = () => { showTab('logs'); map.fitBounds(m.log.bounds); };
-                list.appendChild(el);
-            });
-        }
-
         // --- LOG LADEN ---
         fileInput.addEventListener('change', async (e) => {
             await loadFiles([...e.target.files]);
@@ -564,7 +227,6 @@
                 }
             }
             updateUI();
-            matchLogsToPlan();
             if (added.length) {
                 let b = L.latLngBounds(added[0].bounds.getSouthWest(), added[0].bounds.getNorthEast());
                 added.forEach(l => b.extend(l.bounds));
@@ -960,7 +622,6 @@
             map.removeLayer(log.swathGroup);
             activeLogs.delete(name);
             updateUI();
-            matchLogsToPlan();
         }
 
         // live = true während des Ziehens im Farbwähler: nur Karte und Farbfeld aktualisieren
@@ -1018,9 +679,6 @@
             [...activeLogs.keys()].forEach(n => removeLog(n));
         };
 
-        // Start
-        updateSeedUI();
-        updateSeedSelects();
     </script>
 </body>
 

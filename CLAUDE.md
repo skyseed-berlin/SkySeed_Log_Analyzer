@@ -13,8 +13,8 @@ Browser-App zur Auswertung von Saatflug-Logs auf einer Karte. Beliebig viele Log
 Drag & Drop auf die Karte (oder über „Logs hinzufügen") geladen, je Log farbig als Saat- und
 Transferlinien gezeichnet und statistisch ausgewertet: je Log und aggregiert über alle sichtbaren
 Logs (Flugzeit, Saatzeit, Strecken, Saatfläche ohne Überschneidungen, abgeworfenes Gewicht,
-RPM, Radar-Minima usw.). Dazu kommen die Tabs „Planung" (.plan laden, RPM-Empfehlung) und
-„Saatgut" (Kalibrierwerte im `localStorage`).
+RPM, Radar-Minima usw.). Die frühere Planung (.plan, RPM-Empfehlung) und die Saatgut-Datenbank
+sind entfernt; der Analyzer wertet nur noch Logs aus.
 
 ## Architektur-Constraints
 
@@ -33,7 +33,7 @@ RPM, Radar-Minima usw.). Dazu kommen die Tabs „Planung" (.plan laden, RPM-Empf
 
 ```
 index.html           Markup und App-Logik (Karte, Log-Liste, KPI, Statistik-Tabelle,
-                     Drag & Drop, Planung, Saatgut)
+                     Drag & Drop)
 js/log-parser.js     Formaterkennung und Normalisierung (LogParser.parse)
 js/log-stats.js      Statistik je Log, Saatflächen-Raster, Aggregation (LogStats.*)
 styles/base.css      bindet die Skyseed-Design-Tokens ein

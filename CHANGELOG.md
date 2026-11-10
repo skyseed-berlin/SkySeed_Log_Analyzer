@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### 💥 Breaking Changes
+- Tabs „Planung" (.plan laden, RPM-Empfehlung) und „Saatgut" (Kalibrierwerte) entfernt. Der
+  Analyzer wertet nur noch Logs aus; im Browser gespeicherte Saatgut-Kalibrierungen werden nicht
+  mehr angezeigt
+
 ### 🚀 Added
 - Companion-Logs (`flight_*.jsonl`, copter-companion 4.x) lesbar; Formaterkennung am Inhalt,
   das alte JSON-Format bleibt unterstützt

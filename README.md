@@ -45,11 +45,6 @@ unten eine Tabelle mit einer Zeile je Log und einer Gesamtzeile:
 
 Die Saatbreite (Standard 10 m) ist in der Seitenleiste einstellbar.
 
-## Weitere Tabs
-
-- **Planung:** `.plan` laden, mit Saatgut und Zielmenge eine RPM-Empfehlung berechnen.
-- **Saatgut:** Kalibrierwerte (RPM → g/min) je Saatgut, gespeichert im Browser.
-
 ## Hinweis
 
 Das Repository ist öffentlich. Echte Flug-Logs enthalten GPS-Positionen und werden nicht
