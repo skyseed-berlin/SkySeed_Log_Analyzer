@@ -48,8 +48,9 @@ Companion (Pi)  ->  Ingest (Edge Function, Geräte-Key)  ->  Bucket (Rohlog) + T
 
 ## Offene Punkte
 
-1. Speicherort der Daten: geteilte Instanz "Skyseed Apps" oder die Instanz des Eco Dashboards
-   (siehe Begründung im Chat, Empfehlung Skyseed Apps).
+1. Speicherort: entschieden, geteilte Instanz "Skyseed Apps" mit eigenem Schema und privatem
+   Bucket. Offen bleibt, wie das Eco Dashboard (liest bisher aus seiner eigenen Instanz) darauf
+   zugreift: zweiter Supabase-Client oder Read-Function. Das klärt Dominik.
 2. Gerätekennung: heute nur `drone_id` (3 = THOR, 9 = Simulator), keine Seriennummer. Reicht das
    für den Geräte-Key?
 3. Aufbewahrung: Der Companion löscht nie, der Pi-Speicher füllt sich. Löschregel nach bestätigtem
