@@ -20,12 +20,17 @@ sind entfernt; der Analyzer wertet nur noch Logs aus.
 
 - **Kein Build-Tool, kein Server nötig.** `index.html` läuft direkt per `file://`. Alle Skripte
   sind klassische `<script src>`-Tags im globalen Scope, keine ES-Module.
-- **Leaflet** kommt per CDN (unpkg, mit SRI-Hash). Weitere Abhängigkeiten nur nach Rückfrage.
+- **Leaflet** kommt per CDN (unpkg, mit SRI-Hash). Ebenso supabase-js (jsDelivr, Version fest, SRI-Hash) für die Cloud-Logs. Weitere Abhängigkeiten nur nach Rückfrage.
+- **Anmeldung:** Submodul `vendor/skyseed-auth` (privates Repo), `SkyseedAuth.guard()` mit Client-ID `skyseed-log-analyzer`, `env: 'prod'`, Gast-Modus erlaubt und Session-Bridge (`skyseed-session` in "Skyseed Apps"). Die Bridge ist nötig, weil `app_companion.flights` und der Bucket per RLS auf `authenticated` beschränkt sind. Gast-Modus: lokale Logs funktionieren wie vorher, nur die Cloud-Logs fordern die Anmeldung an.
 - **Kartenkacheln:** Esri (Satellit und Straße), ohne Key und ohne Referer. CARTO verlangt seit
   Ende August 2026 einen API-Key, `tile.openstreetmap.org` blockiert `file://`. Beides nicht als
   Standard einsetzen.
-- **Ladereihenfolge:** `leaflet.js` → `js/log-parser.js` → `js/log-stats.js` → Inline-Skript in
+- **Ladereihenfolge:** `leaflet.js` → supabase-js → `vendor/skyseed-auth/web/skyseed-auth.js` →
+  `js/log-parser.js` → `js/log-stats.js` → `js/cloud-data.js` → `js/cloud-ui.js` → Inline-Skript in
   `index.html`.
+- **GitHub Pages (später):** `vendor/skyseed-auth` ist privat. Der Pages-Workflow braucht einen
+  read-only Deploy Key und einen Whitelist-Build (nur `web/` des Submoduls ausliefern, nie `path: '.'`),
+  siehe Skill `skyseed-auth`, Datei `SKYSEED-AUTH_EINBINDUNG-WEB.md`, Abschnitt 5.
 - **Öffentliches Repo:** Echte Flug-Logs (`*.jsonl`, `test-logs/`) sind per `.gitignore`
   ausgeschlossen, weil sie GPS-Positionen enthalten. Keine Logs committen.
 
@@ -36,6 +41,12 @@ index.html           Markup und App-Logik (Karte, Log-Liste, KPI, Statistik-Tabe
                      Drag & Drop)
 js/log-parser.js     Formaterkennung und Normalisierung (LogParser.parse)
 js/log-stats.js      Statistik je Log, Saatflächen-Raster, Aggregation (LogStats.*)
+js/cloud-data.js     Cloud-Zugriff: Flugliste und Rohdateien aus Supabase (Schema app_companion,
+                     Bucket companion-flightlogs), Blöcke aus dem Dashboard (Seeddrops mit geojson),
+                     Geometrie, Zuordnung, Filter. Ohne DOM, per Node testbar
+js/cloud-ui.js       Seitenleisten-Bereich "Cloud-Logs": Suche, Filter, Fläche/Block, Mehrfachauswahl
+tests/               node --test tests/cloud-data.test.js (Geometrie, Zuordnung, Filter)
+vendor/skyseed-auth  Submodul, Login-Gate und Session-Bridge
 styles/base.css      bindet die Skyseed-Design-Tokens ein
 styles/tokens/*.css  vendorte Tokens aus dem Skill skyseed-design (nicht von Hand ändern,
                      bei Bedarf über den Skill neu synchronisieren)
@@ -75,6 +86,23 @@ einheitlichen Sample-Format (Felder siehe Kopfkommentar in `js/log-parser.js`).
   nach der letzten Saatphase, Differenz.
 - **Höhenradar-Minimum** nur während der Saat, **Frontradar-Minimum** im Flug ab 3 m über Start.
 - **Mission:** wechselt `mission_count` im Flug, zählt die Wegpunkt-Anzeige ab der neuen Mission.
+
+## Cloud-Logs
+
+- Quelle: Companion-Logs der Drohnen, hochgeladen von `logsync` (Repo copter-companion). Tabelle
+  `app_companion.flights` (Metadaten inkl. Bounding Box), Rohdatei als gzip im Bucket.
+  `CloudData.downloadFlight` entpackt per `DecompressionStream` und übergibt eine `File` mit dem
+  Companion-Dateinamen an `loadFiles()`, deshalb greift die Duplikaterkennung nach Dateiname.
+- **Blöcke** sind im Dashboard Seeddrops (`/api/seeddrops/`) mit Feld `geojson`, `area`,
+  `project_area_name`, `name`. Das Format von `geojson` ist nicht live gegen Produktivdaten geprüft:
+  `polygonsFromGeoJson` liest Feature, FeatureCollection, Polygon, MultiPolygon und Strings.
+- **Zuordnung** Cloud-Liste (Flug noch nicht geladen): Bounding Box des Flugs gegen die Außenkontur
+  des Blocks (`blocksForFlight`). Kandidaten, kein Beweis, Transferflüge zählen mit.
+- **Zuordnung geladener Logs** (`blocksForTrack`, `CloudUI.assignLoaded`): Anteil der Saatpunkte je
+  Block (ohne Saatpunkte alle Punkte), Schwelle 5 %. Ergebnis in `log.blockMatch`, neu berechnet
+  wenn sich die Blöcke ändern (`blocksVersion`). Wirkt auch für lokal geladene Logs, braucht aber die
+  Anmeldung für die Blöcke. Löcher in Block-Polygonen werden ignoriert (nur Außenkontur).
+- Das Dashboard wird über `SkyseedAuth.fetchDashboard` gelesen (`prod-read`), nie geschrieben.
 
 ## Versionierung
 

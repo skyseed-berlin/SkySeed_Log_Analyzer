@@ -12,6 +12,26 @@ Browser (`index.html` öffnen).
    - Companion-Logs `flight_*.jsonl` (copter-companion 4.x)
    - alte Seed-Logs als JSON-Array
 
+## Cloud-Logs
+
+Die Drohnen laden Saatflug-Logs automatisch hoch. In der Seitenleiste unter „Cloud-Logs" (nach
+Anmeldung mit dem Skyseed-Login) lassen sie sich laden:
+
+- Liste nach Datum, neueste zuerst. Suche nach Datum, Drohne, Fläche oder Block, Datumsfilter,
+  Drohnenfilter. Testflüge (Simulator) sind standardmäßig ausgeblendet.
+- „Fläche / Block": Auswahl aus dem Dashboard, mehrere Blöcke gleichzeitig. Die Zuordnung ist ein
+  Kandidatenvergleich: der Flugbereich (Bounding Box) berührt den Block. Ein Transferflug über
+  einen Block zählt dabei mit.
+- Mehrere Flüge ankreuzen und gemeinsam laden. Bereits geladene Flüge sind markiert.
+- **Geladene Logs zuordnen:** Nach der Anmeldung zeigt die Log-Liste je Log die Blöcke mit dem
+  Anteil der Saatpunkte darin (auch für lokal per Drag & Drop geladene Logs). „Geladene Logs nach
+  Auswahl ein-/ausblenden" blendet Logs aus, die in keinem gewählten Block liegen. Die Zuordnung
+  nutzt die Saatpunkte, Transferstrecken zählen nicht. Blöcke mit weniger als 5 % der Punkte fallen heraus.
+- Ohne Anmeldung („Ohne Anmeldung fortfahren") bleibt das Laden lokaler Dateien möglich.
+
+Submodule beim Klonen holen: `git submodule update --init --recursive` (`skyseed-auth` ist ein
+privates Repo).
+
 ## Karte
 
 - Jedes Log bekommt eine eigene Farbe. Klick auf das Farbfeld in der Log-Liste öffnet den

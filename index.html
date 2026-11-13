@@ -7,6 +7,7 @@
     <title>Flight Log Analyzer - Skyseed</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="vendor/skyseed-auth/web/skyseed-auth.css">
     <link rel="stylesheet" href="styles/base.css">
     <link rel="stylesheet" href="styles/app.css">
 </head>
@@ -20,6 +21,7 @@
             <h1>Skyseed Analyzer</h1>
         </div>
         <div class="header-right">
+            <span id="account-slot"></span>
             <span id="app-version" class="version"></span>
             <div id="status-display" class="status">Bereit</div>
         </div>
@@ -41,6 +43,11 @@
                     <label for="file-input" class="btn btn-primary btn-block">Logs hinzufügen</label>
                     <input type="file" id="file-input" multiple accept=".jsonl,.json,.txt,.log">
                     <div class="hint">Oder Dateien direkt auf die Karte ziehen.</div>
+                </div>
+
+                <div class="log-section cloud-section">
+                    <h2>Cloud-Logs <span class="h2-sub">(hochgeladene Saatflüge)</span></h2>
+                    <div id="cloud-body"></div>
                 </div>
 
                 <div class="log-section settings">
@@ -95,8 +102,13 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"
+        integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
+    <script src="vendor/skyseed-auth/web/skyseed-auth.js"></script>
     <script src="js/log-parser.js"></script>
     <script src="js/log-stats.js"></script>
+    <script src="js/cloud-data.js"></script>
+    <script src="js/cloud-ui.js"></script>
     <script>
         const APP_VERSION = "1.2.0";
         document.getElementById('app-version').textContent = 'v' + APP_VERSION;
@@ -397,6 +409,7 @@
         }
 
         function updateUI() {
+            CloudUI.onLogsChanged();
             renderLogList();
             const vis = visibleLogs();
             const agg = LogStats.aggregate(vis, seedWidth());
@@ -443,6 +456,7 @@
                         <div class="log-name">${esc(name)}</div>
                         <div class="log-meta">${metaParts.join(' · ')}</div>
                         <div class="log-meta">${fmtDur(s.seedTime)} Saat · ${fmtHa(log.coverage.areaM2)} · ${fmtKg(s.weightDropped)}</div>
+                        ${CloudUI.blockText(log) ? `<div class="log-meta cloud-tags" title="Anteil der Saatpunkte im Block">${CloudUI.blockText(log)}</div>` : ''}
                     </div>
                     <div class="log-actions">
                         <button class="icon-btn star-log${log.starred ? ' starred' : ''}" data-act="star" title="${log.starred ? 'Stern entfernen' : 'Favorit'}">
@@ -517,6 +531,8 @@
         const TABLE_COLUMNS = [
             { label: 'Start', log: l => fmtDateTime(l.stats.start),
               agg: a => a.start === null ? NA : `${fmtDateTime(a.start)}<br><span class="sub">bis ${fmtDateTime(a.end)}</span>` },
+            { label: 'Fläche / Block', title: 'Anteil der Saatpunkte im Block, nur nach Anmeldung',
+              log: l => CloudUI.blockText(l) || NA, agg: () => '' },
             { label: 'Drohne', log: l => l.meta.droneId ? esc(l.meta.droneId) : NA, agg: a => a.drones.length ? esc(a.drones.join(', ')) : NA },
             { label: 'Flugzeit', log: l => fmtDur(l.stats.flightTime), agg: a => fmtDur(a.flightTime) },
             { label: 'Saatzeit', log: l => fmtDur(l.stats.seedTime), agg: a => fmtDur(a.seedTime) },
@@ -678,6 +694,22 @@
             if (!confirm(`Alle ${activeLogs.size} Logs entfernen?`)) return;
             [...activeLogs.keys()].forEach(n => removeLog(n));
         };
+
+        // --- ANMELDUNG (skyseed-auth) ---
+        // Lokale Logs gehen weiter ohne Anmeldung (Gast-Modus). Die Cloud-Logs brauchen eine echte
+        // Supabase-Sitzung: die Bridge meldet den Client an, RLS greift dann für "authenticated".
+        CloudUI.init(document.getElementById('cloud-body'));
+        SkyseedAuth.guard({
+            clientId: 'skyseed-log-analyzer',
+            env: 'prod',
+            version: APP_VERSION,
+            guest: { allowed: true },
+            supabase: { client: CloudData.client(), sessionFunction: 'skyseed-session' }
+        }).then(function (session) {
+            SkyseedAuth.mountAccountButton(document.getElementById('account-slot'));
+            CloudUI.setSession(session);
+            SkyseedAuth.on('change', function (s) { CloudUI.setSession(s); });
+        });
 
     </script>
 </body>

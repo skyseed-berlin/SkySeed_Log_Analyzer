@@ -1,0 +1,3 @@
+[submodule "vendor/skyseed-auth"]
+	path = vendor/skyseed-auth
+	url = https://github.com/skyseed-berlin/skyseed-auth.git
