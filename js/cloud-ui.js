@@ -21,6 +21,7 @@ var CloudUI = (function () {
         error: null
     };
     var root = null;
+    var blocksVersion = 0; // zählt hoch, wenn die Blöcke neu geladen oder verworfen werden
 
     function init(el) {
         root = el;
@@ -35,6 +36,8 @@ var CloudUI = (function () {
             state.blocks = null;
             state.selectedFlights.clear();
             state.selectedBlocks.clear();
+            blocksVersion++;
+            assignLoaded();
         } else if (state.flights === null && !state.loading) {
             refresh();
         }
@@ -52,10 +55,46 @@ var CloudUI = (function () {
             .catch(function (err) { state.blocks = []; state.blocksError = err.message || String(err); });
         return Promise.all([flightsP.catch(function (err) { state.error = err.message || String(err); state.flights = []; }), blocksP])
             .then(function () {
+                blocksVersion++;
                 state.areas = CloudData.groupByArea(state.blocks.filter(function (b) { return b.rings.length; }));
                 state.assignment = CloudData.assign(state.flights, state.blocks);
             })
-            .then(function () { state.loading = false; render(); });
+            .then(function () { state.loading = false; render(); assignLoaded(); updateUI(); });
+    }
+
+    // --- Zuordnung geladener Logs ---
+    // Anteil der Saatpunkte je Block (ohne Saatpunkte: alle Punkte). Ergebnis in log.blockMatch.
+    function assignLoaded() {
+        activeLogs.forEach(function (log) {
+            if (log.blockVersion === blocksVersion) return;
+            log.blockVersion = blocksVersion;
+            if (!state.blocks) { log.blockMatch = null; return; }
+            var seed = [], all = [];
+            log.segments.forEach(function (seg) {
+                seg.pts.forEach(function (p) { all.push(p); if (seg.cat === 'seed') seed.push(p); });
+            });
+            log.blockMatch = CloudData.blocksForTrack(seed.length ? seed : all, state.blocks);
+        });
+    }
+
+    // Text für die Log-Liste und die Statistik-Tabelle (HTML, bereits maskiert)
+    function blockText(log) {
+        if (!log.blockMatch) return '';
+        if (!log.blockMatch.length) return 'kein Block gefunden';
+        return log.blockMatch.slice(0, 3).map(function (m) {
+            return esc(m.block.label) + ' (' + Math.round(m.share * 100) + ' %)';
+        }).join(' · ') + (log.blockMatch.length > 3 ? ' +' + (log.blockMatch.length - 3) : '');
+    }
+
+    // Geladene Logs nach der Block-Auswahl ein- und ausblenden. Ohne Auswahl sind alle sichtbar.
+    function applySelectionToLoaded() {
+        var sel = state.selectedBlocks;
+        [...activeLogs.entries()].forEach(function (e) {
+            var log = e[1];
+            var show = !sel.size || (log.blockMatch || []).some(function (m) { return sel.has(m.block.id); });
+            if (log.visible !== show) toggleLog(e[0]);
+        });
+        updateUI();
     }
 
     // --- Hilfen ---
@@ -175,6 +214,7 @@ var CloudUI = (function () {
                 h += '</div>';
             });
             h += '</div>';
+            if (activeLogs.size) h += '<button id="cloud-areas-apply" class="btn btn-ghost btn-block" title="Blendet geladene Logs aus, die in keinem gewählten Block liegen">Geladene Logs nach Auswahl ein-/ausblenden</button>';
             if (n) h += '<button id="cloud-areas-clear" class="btn btn-ghost btn-block">Auswahl aufheben</button>';
         }
         return h + '</details>';
@@ -200,6 +240,7 @@ var CloudUI = (function () {
         on('#cloud-load', 'click', loadSelected);
         on('#cloud-areas', 'toggle', function (e) { state.areaOpen = e.target.open; });
         on('#cloud-area-search', 'input', keepFocus('#cloud-area-search', function (e) { state.areaSearch = e.target.value; state.areaOpen = true; }));
+        on('#cloud-areas-apply', 'click', applySelectionToLoaded);
         on('#cloud-areas-clear', 'click', function () { state.selectedBlocks.clear(); state.areaOpen = true; render(); });
 
         root.querySelectorAll('input[data-partial]').forEach(function (el) { el.indeterminate = true; });
@@ -298,8 +339,9 @@ var CloudUI = (function () {
 
     // Wird nach jeder Änderung der geladenen Logs aufgerufen, damit "geladen" stimmt
     function onLogsChanged() {
+        assignLoaded();
         if (state.loggedIn && state.flights !== null && root && root.querySelector('#cloud-list-wrap')) renderList();
     }
 
-    return { init: init, setSession: setSession, onLogsChanged: onLogsChanged };
+    return { init: init, setSession: setSession, onLogsChanged: onLogsChanged, blockText: blockText };
 })();

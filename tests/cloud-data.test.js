@@ -65,3 +65,17 @@ test('Filter: Testflüge, Text, Datum, Drohne, Block', () => {
 test('Dateiname entspricht dem Companion-Dateinamen', () => {
     assert.equal(C.fileName({ flight_id: '20261116_100000Z' }), 'flight_20261116_100000Z.jsonl');
 });
+
+test('Zuordnung einer Flugbahn nach Punktanteil', () => {
+    // 8 Punkte in Block 1, 2 Punkte weit weg
+    const pts = [];
+    for (let i = 0; i < 8; i++) pts.push([52.002 + i * 0.0005, 13.005]);
+    pts.push([53, 13], [53.1, 13.1]);
+    const res = C.blocksForTrack(pts, [b1, b2]);
+    assert.deepEqual(res.map(r => r.block.id), [1]);
+    assert.equal(res[0].share, 0.8);
+    // unter der Mindestschwelle fällt der Block heraus
+    const far = []; for (let i = 0; i < 40; i++) far.push([53, 13]);
+    assert.deepEqual(C.blocksForTrack(far.concat([pts[0]]), [b1]).map(r => r.block.id), []);
+    assert.deepEqual(C.blocksForTrack([], [b1]), []);
+});

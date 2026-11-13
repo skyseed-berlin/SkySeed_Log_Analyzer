@@ -8,6 +8,9 @@
   mit Suche, Datumsfilter, Drohnenfilter und Mehrfachauswahl zum Laden
 - Auswahl nach Fläche und Block aus dem Skyseed-Dashboard (mehrere gleichzeitig). Die Zuordnung
   ist ein Kandidatenvergleich der Flug-Bounding-Box mit der Blockgeometrie
+- Geladene Logs (lokal oder aus der Cloud) werden nach der Anmeldung Blöcken zugeordnet: Anteil der
+  Saatpunkte je Block in der Log-Liste und als Spalte „Fläche / Block" in der Statistik-Tabelle.
+  „Geladene Logs nach Auswahl ein-/ausblenden" blendet Logs aus, die in keinem gewählten Block liegen
 - Dieselbe Datei aus Cloud und per Drag & Drop wird als Duplikat erkannt (gleicher Dateiname)
 
 ### 🔄 Changed

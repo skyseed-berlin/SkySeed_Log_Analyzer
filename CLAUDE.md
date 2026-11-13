@@ -96,8 +96,12 @@ einheitlichen Sample-Format (Felder siehe Kopfkommentar in `js/log-parser.js`).
 - **Blöcke** sind im Dashboard Seeddrops (`/api/seeddrops/`) mit Feld `geojson`, `area`,
   `project_area_name`, `name`. Das Format von `geojson` ist nicht live gegen Produktivdaten geprüft:
   `polygonsFromGeoJson` liest Feature, FeatureCollection, Polygon, MultiPolygon und Strings.
-- **Zuordnung** Flug zu Block: Bounding Box des Flugs gegen die Außenkontur des Blocks. Kandidaten,
-  kein Beweis (Transferflüge zählen mit). Genauer wäre ein Abgleich der Saatpunkte nach dem Laden.
+- **Zuordnung** Cloud-Liste (Flug noch nicht geladen): Bounding Box des Flugs gegen die Außenkontur
+  des Blocks (`blocksForFlight`). Kandidaten, kein Beweis, Transferflüge zählen mit.
+- **Zuordnung geladener Logs** (`blocksForTrack`, `CloudUI.assignLoaded`): Anteil der Saatpunkte je
+  Block (ohne Saatpunkte alle Punkte), Schwelle 5 %. Ergebnis in `log.blockMatch`, neu berechnet
+  wenn sich die Blöcke ändern (`blocksVersion`). Wirkt auch für lokal geladene Logs, braucht aber die
+  Anmeldung für die Blöcke. Löcher in Block-Polygonen werden ignoriert (nur Außenkontur).
 - Das Dashboard wird über `SkyseedAuth.fetchDashboard` gelesen (`prod-read`), nie geschrieben.
 
 ## Versionierung

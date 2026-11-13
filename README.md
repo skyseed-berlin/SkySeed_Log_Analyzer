@@ -23,6 +23,10 @@ Anmeldung mit dem Skyseed-Login) lassen sie sich laden:
   Kandidatenvergleich: der Flugbereich (Bounding Box) berührt den Block. Ein Transferflug über
   einen Block zählt dabei mit.
 - Mehrere Flüge ankreuzen und gemeinsam laden. Bereits geladene Flüge sind markiert.
+- **Geladene Logs zuordnen:** Nach der Anmeldung zeigt die Log-Liste je Log die Blöcke mit dem
+  Anteil der Saatpunkte darin (auch für lokal per Drag & Drop geladene Logs). „Geladene Logs nach
+  Auswahl ein-/ausblenden" blendet Logs aus, die in keinem gewählten Block liegen. Die Zuordnung
+  nutzt die Saatpunkte, Transferstrecken zählen nicht. Blöcke mit weniger als 5 % der Punkte fallen heraus.
 - Ohne Anmeldung („Ohne Anmeldung fortfahren") bleibt das Laden lokaler Dateien möglich.
 
 Submodule beim Klonen holen: `git submodule update --init --recursive` (`skyseed-auth` ist ein

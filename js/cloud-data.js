@@ -216,6 +216,29 @@ var CloudData = (function () {
         });
     }
 
+    // Zuordnung einer geladenen Flugbahn: Anteil der Punkte (lat, lon) je Block. Bei Saatflügen
+    // werden nur Saatpunkte übergeben, damit Transferstrecken nicht zählen. Blöcke mit weniger als
+    // minShare der Punkte fallen heraus (Rand-Streifer durch GPS-Rauschen). Sortiert nach Anteil.
+    function blocksForTrack(points, blocks, minShare) {
+        if (!points.length) return [];
+        var min = minShare === undefined ? 0.05 : minShare;
+        var res = [];
+        blocks.forEach(function (b) {
+            if (!b.bbox) return;
+            var n = 0;
+            for (var i = 0; i < points.length; i++) {
+                var lat = points[i][0], lon = points[i][1];
+                if (lon < b.bbox.minLon || lon > b.bbox.maxLon || lat < b.bbox.minLat || lat > b.bbox.maxLat) continue;
+                for (var r = 0; r < b.rings.length; r++) {
+                    if (pointInRing(lon, lat, b.rings[r])) { n++; break; }
+                }
+            }
+            var share = n / points.length;
+            if (n > 0 && share >= min) res.push({ block: b, share: share, points: n });
+        });
+        return res.sort(function (a, b) { return b.share - a.share; });
+    }
+
     // flight_uid -> Liste der Block-IDs
     function assign(flights, blocks) {
         var map = {};
@@ -273,6 +296,7 @@ var CloudData = (function () {
         normalizeBlock: normalizeBlock,
         polygonsFromGeoJson: polygonsFromGeoJson,
         blocksForFlight: blocksForFlight,
+        blocksForTrack: blocksForTrack,
         assign: assign,
         groupByArea: groupByArea,
         filterFlights: filterFlights,

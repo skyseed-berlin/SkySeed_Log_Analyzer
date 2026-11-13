@@ -409,8 +409,8 @@
         }
 
         function updateUI() {
-            renderLogList();
             CloudUI.onLogsChanged();
+            renderLogList();
             const vis = visibleLogs();
             const agg = LogStats.aggregate(vis, seedWidth());
             renderKpis(agg, vis.length);
@@ -456,6 +456,7 @@
                         <div class="log-name">${esc(name)}</div>
                         <div class="log-meta">${metaParts.join(' · ')}</div>
                         <div class="log-meta">${fmtDur(s.seedTime)} Saat · ${fmtHa(log.coverage.areaM2)} · ${fmtKg(s.weightDropped)}</div>
+                        ${CloudUI.blockText(log) ? `<div class="log-meta cloud-tags" title="Anteil der Saatpunkte im Block">${CloudUI.blockText(log)}</div>` : ''}
                     </div>
                     <div class="log-actions">
                         <button class="icon-btn star-log${log.starred ? ' starred' : ''}" data-act="star" title="${log.starred ? 'Stern entfernen' : 'Favorit'}">
@@ -530,6 +531,8 @@
         const TABLE_COLUMNS = [
             { label: 'Start', log: l => fmtDateTime(l.stats.start),
               agg: a => a.start === null ? NA : `${fmtDateTime(a.start)}<br><span class="sub">bis ${fmtDateTime(a.end)}</span>` },
+            { label: 'Fläche / Block', title: 'Anteil der Saatpunkte im Block, nur nach Anmeldung',
+              log: l => CloudUI.blockText(l) || NA, agg: () => '' },
             { label: 'Drohne', log: l => l.meta.droneId ? esc(l.meta.droneId) : NA, agg: a => a.drones.length ? esc(a.drones.join(', ')) : NA },
             { label: 'Flugzeit', log: l => fmtDur(l.stats.flightTime), agg: a => fmtDur(a.flightTime) },
             { label: 'Saatzeit', log: l => fmtDur(l.stats.seedTime), agg: a => fmtDur(a.seedTime) },
